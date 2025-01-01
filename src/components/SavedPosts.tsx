@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2 } from 'lucide-react';
 import type { SavedPost } from '@/types/post';
+import PostActions from './PostActions';
 
 interface SavedPostsProps {
   posts: SavedPost[];
@@ -19,19 +20,26 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
         ) : (
           <div className="space-y-4">
             {posts.map((post) => (
-              <div key={post.id} className="flex items-start justify-between space-x-4 p-2 border rounded">
-                <div className="flex-1">
-                  <p className="text-sm">{post.content}</p>
-                  <p className="text-xs text-gray-500 mt-1">{new Date(post.timestamp).toLocaleDateString()}</p>
+              <div key={post.id} className="flex flex-col space-y-2 p-2 border rounded">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm">{post.content}</p>
+                    <p className="text-xs text-gray-500 mt-1">{new Date(post.timestamp).toLocaleDateString()}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDelete(post.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onDelete(post.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <PostActions
+                  onSave={() => {}}
+                  textToShare={post.content}
+                  isSavedPost={true}
+                />
               </div>
             ))}
           </div>

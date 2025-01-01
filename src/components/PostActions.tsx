@@ -11,9 +11,10 @@ import { useToast } from '@/components/ui/use-toast';
 interface PostActionsProps {
   onSave: () => void;
   textToShare: string;
+  isSavedPost?: boolean;
 }
 
-const PostActions = ({ onSave, textToShare }: PostActionsProps) => {
+const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsProps) => {
   const { toast } = useToast();
 
   const shareToTwitter = () => {
@@ -36,13 +37,15 @@ const PostActions = ({ onSave, textToShare }: PostActionsProps) => {
 
   return (
     <div className="flex gap-4">
-      <Button
-        onClick={onSave}
-        className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-      >
-        <Save className="w-4 h-4 mr-2" />
-        Save Post
-      </Button>
+      {!isSavedPost && (
+        <Button
+          onClick={onSave}
+          className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          Save Post
+        </Button>
+      )}
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
