@@ -13,7 +13,7 @@ interface SavedPostsProps {
 const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
   return (
     <div className="mt-6 border rounded-lg p-4">
-      <h2 className="text-lg font-semibold mb-4">Saved Posts ({posts.length}/10)</h2>
+      <h2 className="text-lg font-semibold mb-4 text-center">Saved Posts ({posts.length}/10)</h2>
       <ScrollArea className="h-[200px] w-full rounded-md border p-4">
         {posts.length === 0 ? (
           <p className="text-gray-500 text-center">No saved posts yet</p>
