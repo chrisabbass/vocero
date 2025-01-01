@@ -29,45 +29,55 @@ export const generateVariations = async (text: string, personality: string = 'fr
     name: 'OPENAI_API_KEY'
   });
 
-  if (secretError || !apiKey) {
+  if (secretError) {
     console.error('Error fetching OpenAI API key:', secretError);
-    throw new Error('Failed to fetch OpenAI API key. Please ensure it is set in Supabase secrets.');
+    throw new Error(`Failed to fetch OpenAI API key: ${secretError.message}`);
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: "gpt-4",
-      messages: [{
-        role: "system",
-        content: getPersonalityPrompt(personality)
-      }, {
-        role: "user",
-        content: `Create 3 variations of this text for social media, maintaining the selected tone: ${text}`
-      }],
-      temperature: 0.7
-    })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error('OpenAI API error:', errorData);
-    throw new Error(errorData.error?.message || 'Failed to generate variations');
+  if (!apiKey) {
+    console.error('No OpenAI API key found');
+    throw new Error('OpenAI API key not found in Supabase secrets');
   }
 
-  const responseData = await response.json() as OpenAIResponse;
-  console.log('OpenAI response:', responseData);
-  
-  if (responseData.choices && responseData.choices[0]) {
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "system",
+          content: getPersonalityPrompt(personality)
+        }, {
+          role: "user",
+          content: `Create 3 variations of this text for social media, maintaining the selected tone: ${text}`
+        }],
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('OpenAI API error:', errorData);
+      throw new Error(errorData.error?.message || 'OpenAI API request failed');
+    }
+
+    const responseData = await response.json() as OpenAIResponse;
+    console.log('OpenAI response:', responseData);
+    
+    if (!responseData.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from OpenAI');
+    }
+    
     return responseData.choices[0].message.content
       .split('\n')
       .filter((v: string) => v.trim().length > 0)
       .slice(0, 3);
+  } catch (error) {
+    console.error('Error in OpenAI request:', error);
+    throw new Error(`OpenAI API error: ${error.message}`);
   }
-  
-  return [];
 };
