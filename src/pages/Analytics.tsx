@@ -173,28 +173,6 @@ const Analytics = () => {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">Top Performing Posts</h2>
-          <div className="bg-white rounded-lg shadow p-6">
-            {topPosts && topPosts.length > 0 ? (
-              <ol className="list-decimal list-inside space-y-4">
-                {topPosts.map((post, index) => (
-                  <li key={index} className="text-sm">
-                    <span className="font-medium">
-                      {post.content} 
-                    </span>
-                    <span className="text-gray-500 ml-2">
-                      ({post.totalImpressions.toLocaleString()} impressions on {post.platform})
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="text-gray-500 text-center">No posts to display yet.</p>
-            )}
-          </div>
-        </div>
-
-        <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4">Performance Over Time</h2>
           <div className="bg-white rounded-lg shadow p-4">
             <ChartContainer className="h-[400px]" config={{}}>
@@ -226,6 +204,28 @@ const Analytics = () => {
             No shared posts found. Share some posts on Twitter or LinkedIn to see their performance here.
           </div>
         )}
+
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-4">Top Performing Posts</h2>
+          <div className="bg-white rounded-lg shadow p-6">
+            {topPosts && topPosts.length > 0 ? (
+              <ol className="list-decimal list-inside space-y-4">
+                {topPosts.map((post, index) => (
+                  <li key={index} className="text-sm">
+                    <span className="font-medium">
+                      {post.content} 
+                    </span>
+                    <span className="text-gray-500 ml-2">
+                      ({post.totalImpressions.toLocaleString()} impressions on {post.platform})
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-gray-500 text-center">No posts to display yet.</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
