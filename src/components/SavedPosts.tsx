@@ -25,30 +25,30 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
   }
 
   return (
-    <div className="mt-6 border rounded-lg p-4">
+    <div className="mt-6 border rounded-lg p-4 relative">
       <Carousel
         opts={{
           align: "start",
           loop: posts.length > 1,
         }}
-        className="w-full"
+        className="w-full max-w-md mx-auto"
       >
-        <div className="flex items-center justify-center gap-4 mb-4">
-          {posts.length > 0 && (
-            <CarouselPrevious className="relative left-0 translate-y-0" />
-          )}
-          <h2 className="text-lg font-semibold text-center">
+        <div className="flex items-center justify-between mb-4 px-4">
+          <h2 className="text-lg font-semibold">
             Saved Posts ({posts.length}/10)
           </h2>
-          {posts.length > 0 && (
-            <CarouselNext className="relative right-0 translate-y-0" />
-          )}
         </div>
         
         {posts.length === 0 ? (
-          <p className="text-gray-500 text-center">No saved posts yet</p>
+          <p className="text-gray-500 text-center py-4">No saved posts yet</p>
         ) : (
-          <div className="relative">
+          <div className="relative px-8">
+            {posts.length > 1 && (
+              <>
+                <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2" />
+                <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2" />
+              </>
+            )}
             <CarouselContent>
               {posts.map((post) => (
                 <CarouselItem key={post.id} className="px-1">
