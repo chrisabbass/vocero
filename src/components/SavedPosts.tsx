@@ -26,7 +26,7 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
 
   return (
     <div className="flex justify-center w-full">
-      <div className="mt-4 border rounded-lg p-3 w-fit">
+      <div className="mt-4 border rounded-lg p-3 w-fit max-w-[90vw]">
         <Carousel
           opts={{
             align: "start",
@@ -55,8 +55,8 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
                   <CarouselItem key={post.id}>
                     <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-white shadow-sm mx-1">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm break-words">{post.content}</p>
+                        <div className="flex-1 min-w-0 max-w-full overflow-hidden">
+                          <p className="text-sm break-words overflow-wrap-anywhere">{post.content}</p>
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(post.timestamp).toLocaleDateString()}
                           </p>
