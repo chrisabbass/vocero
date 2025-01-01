@@ -35,12 +35,12 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
   } = useVoiceRecorderInit();
 
   const handleLogoClick = () => {
-    console.log('Logo clicked - resetting all states');
+    console.log('Logo clicked - resetting states without regeneration');
     setVariations([]);
     setSelectedVariation('');
     setIsGenerating(false);
     setTranscript('');
-    setProcessingTranscript('');
+    // Don't reset processingTranscript to prevent regeneration
     setPersonality('friendly');
   };
 
