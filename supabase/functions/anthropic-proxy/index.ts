@@ -1,18 +1,24 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Helper function to verify environment setup
+function verifyEnvironment() {
+  const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+  if (!ANTHROPIC_API_KEY) {
+    console.error('Critical configuration error: ANTHROPIC_API_KEY is not set');
+    throw new Error('Configuration error: Missing API key');
+  }
+  return ANTHROPIC_API_KEY;
 }
 
 // Helper function to create variations with retry logic
 async function createVariations(messages: any[], systemPrompt: string) {
-  const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!ANTHROPIC_API_KEY) {
-    console.error('Missing ANTHROPIC_API_KEY');
-    throw new Error('Configuration error: Missing API key');
-  }
+  const ANTHROPIC_API_KEY = verifyEnvironment();
   
   console.log('Creating variations with system prompt:', systemPrompt);
   console.log('Messages:', JSON.stringify(messages));
@@ -76,9 +82,8 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== 'POST') {
-      throw new Error('Method not allowed');
-    }
+    // Verify environment before processing request
+    verifyEnvironment();
 
     const { messages, systemPrompt } = await req.json();
     console.log('Processing request with message count:', messages.length);
@@ -120,4 +125,4 @@ serve(async (req) => {
       status: 500
     });
   }
-})
+});
