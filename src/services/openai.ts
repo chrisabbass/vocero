@@ -1,48 +1,33 @@
 import { supabase } from "@/integrations/supabase/client";
 
-interface OpenAIResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
-
 const getPersonalityPrompt = (personality: string) => {
   switch (personality) {
     case 'direct':
-      return "You are a concise and straightforward social media writer. Focus on clarity and brevity. Get straight to the point without unnecessary words or fluff.";
+      return 'You are a professional content writer who creates clear, concise, and straightforward social media posts.';
     case 'friendly':
-      return "You are a warm and approachable social media writer. Write in a conversational, relatable tone that makes readers feel comfortable and connected.";
+      return 'You are a warm and approachable content writer who creates engaging and relatable social media posts.';
     case 'enthusiastic':
-      return "You are an energetic and passionate social media writer. Use dynamic language and show excitement about the topic. Make the content engaging and inspiring!";
+      return 'You are an energetic content writer who creates exciting and dynamic social media posts with lots of personality!';
     default:
-      return "You are a professional social media writer focused on creating engaging content.";
+      return 'You are a professional content writer who creates engaging social media posts.';
   }
 };
 
-export const generateVariations = async (text: string, personality: string = 'friendly') => {
-  console.log('Starting variation generation for text:', text, 'with personality:', personality);
-  
-  // Get the API key from Supabase
-  const { data: apiKey, error: secretError } = await supabase.rpc('get_secret', {
-    name: 'OPENAI_API_KEY'
-  });
-
-  if (secretError) {
-    console.error('Error fetching OpenAI API key:', secretError);
-    throw new Error(`Failed to fetch OpenAI API key: ${secretError.message}`);
-  }
-
-  if (!apiKey) {
-    console.error('No OpenAI API key found');
-    throw new Error('OpenAI API key not found in Supabase secrets');
-  }
-
-  console.log('Successfully retrieved API key from Supabase');
-
+export const generateVariations = async (text: string, personality: string = 'friendly'): Promise<string[]> => {
   try {
-    console.log('Making request to OpenAI API...');
+    console.log('Generating variations with personality:', personality);
+    console.log('Input text:', text);
+
+    // Fetch the API key from Supabase
+    const { data: { value: apiKey }, error: keyError } = await supabase.rpc('get_secret', {
+      name: 'OPENAI_API_KEY'
+    });
+
+    if (keyError || !apiKey) {
+      console.error('Error fetching OpenAI API key:', keyError);
+      throw new Error('Failed to fetch OpenAI API key');
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -50,32 +35,34 @@ export const generateVariations = async (text: string, personality: string = 'fr
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o-mini",
         messages: [{
           role: "system",
           content: getPersonalityPrompt(personality)
         }, {
           role: "user",
-          content: `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line: ${text}`
+          content: `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${text}`
         }],
         temperature: 0.7
       })
     });
 
+    console.log('OpenAI API Response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('OpenAI API error response:', errorData);
-      throw new Error(errorData.error?.message || 'OpenAI API request failed');
+      console.error('OpenAI API Error:', errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
-    const responseData = await response.json() as OpenAIResponse;
-    console.log('OpenAI API response:', responseData);
-    
+    const responseData = await response.json();
+    console.log('OpenAI API Response:', responseData);
+
     if (!responseData.choices?.[0]?.message?.content) {
-      console.error('Invalid response format from OpenAI:', responseData);
+      console.error('Unexpected OpenAI response format:', responseData);
       throw new Error('Invalid response format from OpenAI');
     }
-    
+
     const variations = responseData.choices[0].message.content
       .split('\n')
       .filter((v: string) => v.trim().length > 0)
@@ -83,9 +70,14 @@ export const generateVariations = async (text: string, personality: string = 'fr
       .slice(0, 3);
     
     console.log('Generated variations:', variations);
+
+    if (variations.length === 0) {
+      throw new Error('No variations were generated');
+    }
+
     return variations;
   } catch (error) {
-    console.error('Error in OpenAI request:', error);
+    console.error('Error in generateVariations:', error);
     throw error;
   }
 };
