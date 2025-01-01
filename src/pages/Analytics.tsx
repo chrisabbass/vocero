@@ -78,6 +78,49 @@ const Analytics = () => {
     },
   });
 
+  // Query for top performing posts
+  const { data: topPosts, isLoading: isLoadingTopPosts } = useQuery({
+    queryKey: ['top-posts'],
+    queryFn: async () => {
+      console.log('Fetching top performing posts');
+      const { data, error } = await supabase
+        .from('post_metrics')
+        .select('post_content, platform, impressions')
+        .order('impressions', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching top posts:', error);
+        throw error;
+      }
+
+      // Get unique posts with their total impressions
+      const postsMap = new Map();
+      data.forEach(post => {
+        if (!postsMap.has(post.post_content)) {
+          postsMap.set(post.post_content, {
+            content: post.post_content,
+            platform: post.platform,
+            totalImpressions: post.impressions || 0
+          });
+        } else {
+          const existing = postsMap.get(post.post_content);
+          postsMap.set(post.post_content, {
+            ...existing,
+            totalImpressions: existing.totalImpressions + (post.impressions || 0)
+          });
+        }
+      });
+
+      // Convert to array and get top 5
+      const topPosts = Array.from(postsMap.values())
+        .sort((a, b) => b.totalImpressions - a.totalImpressions)
+        .slice(0, 5);
+
+      console.log('Top performing posts:', topPosts);
+      return topPosts;
+    },
+  });
+
   const aggregateMetricsByDate = (metrics: any[]) => {
     if (!metrics) return [];
     
@@ -104,7 +147,7 @@ const Analytics = () => {
 
   const chartData = aggregateMetricsByDate(metrics);
 
-  if (isLoading || isLoadingSharedPosts) {
+  if (isLoading || isLoadingSharedPosts || isLoadingTopPosts) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -127,6 +170,28 @@ const Analytics = () => {
               <SelectItem value="quarter">Last Quarter</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Top Performing Posts</h2>
+          <div className="bg-white rounded-lg shadow p-6">
+            {topPosts && topPosts.length > 0 ? (
+              <ol className="list-decimal list-inside space-y-4">
+                {topPosts.map((post, index) => (
+                  <li key={index} className="text-sm">
+                    <span className="font-medium">
+                      {post.content} 
+                    </span>
+                    <span className="text-gray-500 ml-2">
+                      ({post.totalImpressions.toLocaleString()} impressions on {post.platform})
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-gray-500 text-center">No posts to display yet.</p>
+            )}
+          </div>
         </div>
 
         <div className="mb-8">
