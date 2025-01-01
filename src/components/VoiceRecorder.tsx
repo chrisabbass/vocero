@@ -1,15 +1,13 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { generateVariations } from '@/services/anthropic';
 import { supabase } from '@/integrations/supabase/client';
 import { useVoiceRecorderInit } from '@/hooks/useVoiceRecorderInit';
-import RecordButton from './RecordButton';
 import Header from './Header';
 import ToneSelector from './ToneSelector';
 import PaywallDialog from './PaywallDialog';
 import MainContent from './MainContent';
-import LoadingSpinner from './LoadingSpinner';
+import RecordingSection from './RecordingSection';
 import type { SavedPost } from '@/types/post';
 
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
@@ -35,32 +33,14 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     isLoading
   } = useVoiceRecorderInit();
 
-  const { 
-    isRecording, 
-    transcript, 
-    startRecording, 
-    stopRecording,
-    setTranscript 
-  } = useVoiceRecorder();
-
-  console.log('VoiceRecorder savedPosts:', savedPosts);
-  console.log('VoiceRecorder variations:', variations);
-
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting state');
     setVariations([]);
     setSelectedVariation('');
-    setTranscript('');
     setIsGenerating(false);
   };
 
-  useEffect(() => {
-    if (!isRecording && transcript) {
-      handleTranscriptGenerated();
-    }
-  }, [transcript, isRecording]);
-
-  const handleTranscriptGenerated = async () => {
+  const handleTranscriptGenerated = async (transcript: string) => {
     if (!transcript || transcript.trim() === '') {
       console.log('No transcript available');
       toast({
@@ -114,14 +94,6 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     }
   };
 
-  const handleStartRecording = async () => {
-    if (recordingCount >= 3) {
-      setShowPaywall(true);
-      return;
-    }
-    startRecording();
-  };
-
   if (isLoading) {
     return (
       <div className="max-w-md mx-auto p-6">
@@ -139,17 +111,15 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
         onPersonalityChange={setPersonality}
       />
 
-      <RecordButton
-        isRecording={isRecording}
-        onStartRecording={handleStartRecording}
-        onStopRecording={stopRecording}
+      <RecordingSection
+        isGenerating={isGenerating}
+        onTranscriptGenerated={handleTranscriptGenerated}
+        recordingCount={recordingCount}
+        onShowPaywall={() => setShowPaywall(true)}
       />
 
-      {isGenerating ? (
-        <LoadingSpinner message="Generating variations..." />
-      ) : (
+      {!isGenerating && variations.length > 0 && (
         <MainContent
-          transcript={transcript}
           variations={variations}
           selectedVariation={selectedVariation}
           onVariationChange={setSelectedVariation}
