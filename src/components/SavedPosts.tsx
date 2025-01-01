@@ -25,7 +25,7 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
   }
 
   return (
-    <div className="mt-4 border rounded-lg p-3 max-w-xl mx-auto">
+    <div className="mt-4 border rounded-lg p-3 mx-auto w-fit">
       <Carousel
         opts={{
           align: "start",
