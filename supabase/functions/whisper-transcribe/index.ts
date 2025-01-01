@@ -16,6 +16,11 @@ serve(async (req) => {
   }
 
   try {
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found');
+      throw new Error('OpenAI API key not configured');
+    }
+
     console.log('Received transcription request');
     
     // Get the form data from the request
@@ -23,6 +28,7 @@ serve(async (req) => {
     const audioFile = formData.get('audio');
     
     if (!audioFile || !(audioFile instanceof File)) {
+      console.error('No audio file provided in request');
       throw new Error('No audio file provided');
     }
 
@@ -49,9 +55,9 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI API error:', error);
-      throw new Error('Failed to transcribe audio');
+      const errorText = await response.text();
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${errorText}`);
     }
 
     const data = await response.json();
@@ -63,7 +69,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in whisper-transcribe function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
