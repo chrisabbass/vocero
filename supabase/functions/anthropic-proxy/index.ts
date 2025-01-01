@@ -17,8 +17,9 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY is not set')
     }
 
-    const { messages } = await req.json()
+    const { messages, systemPrompt } = await req.json()
     console.log('Received request with messages:', messages)
+    console.log('System prompt:', systemPrompt)
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -30,7 +31,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-3-sonnet-20240229",
         max_tokens: 1024,
-        messages
+        system: systemPrompt,
+        messages: messages.filter((msg: any) => msg.role !== 'system')
       })
     })
 

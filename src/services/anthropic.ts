@@ -19,13 +19,8 @@ export const generateVariations = async (text: string, personality: string = 'fr
 
     const { data, error } = await supabase.functions.invoke('anthropic-proxy', {
       body: JSON.stringify({
-        model: "claude-3-sonnet-20240229",
-        max_tokens: 1024,
+        systemPrompt: systemPrompt,
         messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
           {
             role: "user",
             content: userPrompt
