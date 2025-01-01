@@ -4,11 +4,11 @@ export const getAnthropicApiKey = async (): Promise<string> => {
   console.log('Fetching Anthropic API key from Supabase secrets...');
   
   try {
-    const { data: secretValue, error } = await supabase
+    const { data, error } = await supabase
       .from('secrets')
       .select('value')
       .eq('name', 'ANTHROPIC_API_KEY')
-      .maybeSingle();
+      .single();
 
     if (error) {
       console.error('Database error when fetching Anthropic API key:', {
@@ -20,15 +20,22 @@ export const getAnthropicApiKey = async (): Promise<string> => {
       throw new Error('Failed to fetch Anthropic API key from database');
     }
 
-    if (!secretValue?.value) {
-      console.error('No Anthropic API key found in database. Query returned:', secretValue);
-      throw new Error('Anthropic API key not found in database. Please make sure you have added it correctly using the secret form.');
+    if (!data || !data.value) {
+      console.error('No Anthropic API key found in database. Data returned:', data);
+      
+      // Provide a more helpful error message
+      throw new Error('Anthropic API key is missing. Please add the API key in the Supabase secrets table.');
     }
 
     console.log('Successfully retrieved Anthropic API key');
-    return secretValue.value;
+    return data.value;
   } catch (error) {
-    console.error('Error in getAnthropicApiKey:', error);
-    throw error;
+    console.error('Comprehensive error in getAnthropicApiKey:', error);
+    
+    // If the error is an instance of Error, rethrow it, otherwise create a new error
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Unexpected error retrieving Anthropic API key');
   }
 };
