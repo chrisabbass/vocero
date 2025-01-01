@@ -37,15 +37,15 @@ serve(async (req) => {
       size: audioFile.size
     });
 
-    // Convert the file to an array buffer
+    // Convert the file to an array buffer and then to Uint8Array
     const arrayBuffer = await audioFile.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const uint8Array = new Uint8Array(arrayBuffer);
 
     console.log('Preparing OpenAI API request');
 
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
-    openAIFormData.append('file', new Blob([buffer], { type: 'audio/wav' }), 'audio.wav');
+    openAIFormData.append('file', new Blob([uint8Array], { type: 'audio/wav' }), 'audio.wav');
     openAIFormData.append('model', 'whisper-1');
 
     console.log('Sending request to OpenAI Whisper API');
