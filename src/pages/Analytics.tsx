@@ -106,60 +106,62 @@ const Analytics = () => {
 
   if (isLoading || isLoadingSharedPosts) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select time range" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="week">Last Week</SelectItem>
-            <SelectItem value="month">Last Month</SelectItem>
-            <SelectItem value="quarter">Last Quarter</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">Last Week</SelectItem>
+              <SelectItem value="month">Last Month</SelectItem>
+              <SelectItem value="quarter">Last Quarter</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Performance Over Time</h2>
-        <div className="bg-white rounded-lg shadow p-4">
-          <ChartContainer className="h-[400px]" config={{}}>
-            <LineChart data={chartData}>
-              <XAxis dataKey="date" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line type="monotone" dataKey="impressions" stroke="#2563eb" />
-              <Line type="monotone" dataKey="likes" stroke="#16a34a" />
-              <Line type="monotone" dataKey="comments" stroke="#d97706" />
-              <Line type="monotone" dataKey="reshares" stroke="#dc2626" />
-            </LineChart>
-          </ChartContainer>
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Performance Over Time</h2>
+          <div className="bg-white rounded-lg shadow p-4">
+            <ChartContainer className="h-[400px]" config={{}}>
+              <LineChart data={chartData}>
+                <XAxis dataKey="date" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="impressions" stroke="#2563eb" />
+                <Line type="monotone" dataKey="likes" stroke="#16a34a" />
+                <Line type="monotone" dataKey="comments" stroke="#d97706" />
+                <Line type="monotone" dataKey="reshares" stroke="#dc2626" />
+              </LineChart>
+            </ChartContainer>
+          </div>
         </div>
-      </div>
 
-      <h2 className="text-lg font-semibold mb-4">Individual Post Performance</h2>
-      {sharedPosts && sharedPosts.length > 0 ? (
-        <div className="space-y-8">
-          {sharedPosts.map((postContent) => (
-            <div key={postContent} className="bg-white rounded-lg shadow p-6">
-              <p className="text-sm mb-4">{postContent}</p>
-              <PostMetrics postContent={postContent} />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          No shared posts found. Share some posts on Twitter or LinkedIn to see their performance here.
-        </div>
-      )}
+        <h2 className="text-lg font-semibold mb-4">Individual Post Performance</h2>
+        {sharedPosts && sharedPosts.length > 0 ? (
+          <div className="space-y-8">
+            {sharedPosts.map((postContent) => (
+              <div key={postContent} className="bg-white rounded-lg shadow p-6">
+                <p className="text-sm mb-4">{postContent}</p>
+                <PostMetrics postContent={postContent} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No shared posts found. Share some posts on Twitter or LinkedIn to see their performance here.
+          </div>
+        )}
+      </div>
     </div>
   );
 };
