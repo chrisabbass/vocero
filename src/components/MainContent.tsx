@@ -25,7 +25,7 @@ const MainContent = ({
   savedPosts,
   onDeletePost,
 }: MainContentProps) => {
-  console.log('MainContent rendering with savedPosts:', savedPosts); // Debug log
+  console.log('MainContent rendering with savedPosts:', savedPosts);
 
   return (
     <div className="space-y-6">

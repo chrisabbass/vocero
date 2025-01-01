@@ -17,7 +17,7 @@ interface SavedPostsProps {
 }
 
 const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
-  console.log('Rendering SavedPosts with posts:', posts); // Debug log
+  console.log('Rendering SavedPosts with posts:', posts);
 
   if (!Array.isArray(posts)) {
     console.error('Posts is not an array:', posts);
@@ -64,7 +64,7 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          console.log('Deleting post:', post.id); // Debug log
+                          console.log('Deleting post:', post.id);
                           onDelete(post.id);
                         }}
                         className="text-red-500 hover:text-red-700"
