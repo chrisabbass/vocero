@@ -25,6 +25,7 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
   const [variations, setVariations] = React.useState<string[]>([]);
   const [selectedVariation, setSelectedVariation] = React.useState('');
   const [transcript, setTranscript] = React.useState('');
+  const [processingTranscript, setProcessingTranscript] = React.useState('');
   const { toast } = useToast();
   
   const {
@@ -41,9 +42,16 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     setSelectedVariation('');
     setIsGenerating(false);
     setTranscript('');
+    setProcessingTranscript('');
   };
 
   const handleTranscriptGenerated = async (newTranscript: string) => {
+    // If we're already processing this transcript or generating variations, don't proceed
+    if (processingTranscript === newTranscript || isGenerating) {
+      console.log('Skipping variation generation - already processing or generating');
+      return;
+    }
+
     if (!newTranscript || newTranscript.trim() === '') {
       console.log('No transcript available');
       toast({
@@ -56,6 +64,7 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
 
     try {
       setIsGenerating(true);
+      setProcessingTranscript(newTranscript);
       setTranscript(newTranscript);
       console.log('Generating variations with personality:', personality);
       const newVariations = await generateVariations(newTranscript, personality);
@@ -93,6 +102,8 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
         description: error instanceof Error ? error.message : "Failed to generate variations. Please try again.",
         variant: "destructive",
       });
+      // Reset processing state on error
+      setProcessingTranscript('');
     } finally {
       setIsGenerating(false);
     }
