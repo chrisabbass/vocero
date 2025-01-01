@@ -11,26 +11,38 @@ export type Database = {
     Tables: {
       post_metrics: {
         Row: {
+          comments: number | null
           created_at: string | null
           id: string
+          impressions: number | null
+          likes: number | null
           platform: string
           post_content: string
+          reshares: number | null
           shared_at: string | null
           updated_at: string | null
         }
         Insert: {
+          comments?: number | null
           created_at?: string | null
           id?: string
+          impressions?: number | null
+          likes?: number | null
           platform: string
           post_content: string
+          reshares?: number | null
           shared_at?: string | null
           updated_at?: string | null
         }
         Update: {
+          comments?: number | null
           created_at?: string | null
           id?: string
+          impressions?: number | null
+          likes?: number | null
           platform?: string
           post_content?: string
+          reshares?: number | null
           shared_at?: string | null
           updated_at?: string | null
         }
