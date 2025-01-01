@@ -2,7 +2,8 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -32,7 +33,14 @@ const Login = () => {
   const isFromAnalytics = location.state?.from === '/analytics';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
+      <Link 
+        to="/" 
+        className="absolute top-4 left-4 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Home</span>
+      </Link>
       <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-semibold text-center mb-2">
           {isFromAnalytics ? "Unlock Analytics Features!" : "Welcome Back!"}
