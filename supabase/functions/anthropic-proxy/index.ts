@@ -8,27 +8,22 @@ const corsHeaders = {
 
 // Helper function to verify environment setup
 function verifyEnvironment() {
-  try {
-    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-    console.log('Checking for ANTHROPIC_API_KEY:', ANTHROPIC_API_KEY ? 'Present' : 'Missing');
-    
-    if (!ANTHROPIC_API_KEY) {
-      throw new Error('Configuration error: Missing API key');
-    }
-    return ANTHROPIC_API_KEY;
-  } catch (error) {
-    console.error('Error accessing environment variable:', error);
-    throw error;
+  const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+  console.log('Checking for ANTHROPIC_API_KEY:', ANTHROPIC_API_KEY ? 'Present' : 'Missing');
+  
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('Configuration error: Missing API key');
   }
+  return ANTHROPIC_API_KEY;
 }
 
-// Helper function to create variations with retry logic
+// Helper function to create variations
 async function createVariations(messages: any[], systemPrompt: string) {
   const ANTHROPIC_API_KEY = verifyEnvironment();
   
   console.log('Creating variations with system prompt:', systemPrompt);
   console.log('Messages:', JSON.stringify(messages));
-  
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -47,9 +42,14 @@ async function createVariations(messages: any[], systemPrompt: string) {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Anthropic API error:', error);
-      throw new Error(`Anthropic API error: ${JSON.stringify(error)}`);
+      const errorText = await response.text();
+      console.error('Anthropic API error response:', errorText);
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(`Anthropic API error: ${JSON.stringify(errorJson)}`);
+      } catch {
+        throw new Error(`Anthropic API error: ${errorText}`);
+      }
     }
 
     const data = await response.json();
@@ -62,6 +62,12 @@ async function createVariations(messages: any[], systemPrompt: string) {
 }
 
 serve(async (req) => {
+  console.log('Request received:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
@@ -72,51 +78,57 @@ serve(async (req) => {
     });
   }
 
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }), 
+      { 
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
   try {
-    console.log('Request received:', {
-      method: req.method,
-      url: req.url,
-      headers: Object.fromEntries(req.headers.entries())
-    });
+    // Verify environment before processing request
+    verifyEnvironment();
 
-    // Verify request method
-    if (req.method !== 'POST') {
-      throw new Error('Method not allowed');
-    }
-
-    // Parse request body
+    // Parse and validate request body
     let body;
     try {
       body = await req.json();
     } catch (error) {
       console.error('Error parsing request body:', error);
-      throw new Error('Invalid request body');
+      return new Response(
+        JSON.stringify({ error: 'Invalid request body' }), 
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const { messages, systemPrompt } = body;
     
     if (!messages || !Array.isArray(messages)) {
-      throw new Error('Invalid messages format');
+      return new Response(
+        JSON.stringify({ error: 'Invalid messages format' }), 
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    console.log('Processing request with message count:', messages.length);
-    
-    // Estimate token count (rough estimation)
-    const totalText = messages.reduce((acc: string, msg: any) => acc + msg.content, '') + systemPrompt;
-    const estimatedTokens = Math.ceil(totalText.length / 4); // rough estimate
-    console.log('Estimated input tokens:', estimatedTokens);
-    
-    if (estimatedTokens > 2000) {
-      throw new Error('Input text too long');
-    }
-
-    // Create variations with retry logic
+    // Create variations
     const response = await createVariations(messages, systemPrompt);
-    console.log('Successfully received response from Anthropic');
 
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify(response), 
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
 
   } catch (error) {
     console.error('Error in edge function:', error);
@@ -133,9 +145,12 @@ serve(async (req) => {
       errorMessage += 'An unexpected error occurred. Please try again.';
     }
 
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500
-    });
+    return new Response(
+      JSON.stringify({ error: errorMessage }), 
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
 });
