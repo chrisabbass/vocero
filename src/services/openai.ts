@@ -50,19 +50,17 @@ export const generateVariations = async (text: string, personality: string = 'fr
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4",
         messages: [{
           role: "system",
           content: getPersonalityPrompt(personality)
         }, {
           role: "user",
-          content: `Create 3 variations of this text for social media, maintaining the selected tone: ${text}`
+          content: `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line: ${text}`
         }],
         temperature: 0.7
       })
     });
-
-    console.log('Received response from OpenAI API');
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -81,6 +79,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
     const variations = responseData.choices[0].message.content
       .split('\n')
       .filter((v: string) => v.trim().length > 0)
+      .map((v: string) => v.replace(/^\d+\.\s*/, '').trim())
       .slice(0, 3);
     
     console.log('Generated variations:', variations);
