@@ -64,7 +64,16 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${errorText}`);
+      
+      // More detailed error handling
+      return new Response(JSON.stringify({ 
+        error: 'OpenAI API request failed', 
+        details: errorText,
+        status: response.status 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
