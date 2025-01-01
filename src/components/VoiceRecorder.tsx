@@ -18,11 +18,12 @@ const VoiceRecorder = () => {
   const generateVariations = async (text: string) => {
     setIsGenerating(true);
     try {
+      console.log('Generating variations for text:', text);
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+          'Authorization': `Bearer ${import.meta.env.OPENAI_API_KEY}`
         },
         body: JSON.stringify({
           model: "gpt-4",
@@ -36,6 +37,12 @@ const VoiceRecorder = () => {
           temperature: 0.7
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('OpenAI API error:', errorData);
+        throw new Error(errorData.error?.message || 'Failed to generate variations');
+      }
 
       const data = await response.json();
       console.log('OpenAI response:', data);
@@ -52,7 +59,7 @@ const VoiceRecorder = () => {
       console.error('Error generating variations:', error);
       toast({
         title: "Error",
-        description: "Failed to generate variations. Please try again.",
+        description: "Failed to generate variations. Please check if your OpenAI API key is set correctly.",
         variant: "destructive",
       });
     } finally {
