@@ -1,39 +1,37 @@
-import React from 'react';
-import { useToast } from '@/components/ui/use-toast';
-import { generateVariations } from '@/services/anthropic';
-import { supabase } from '@/integrations/supabase/client';
-import { useVoiceRecorderInit } from '@/hooks/useVoiceRecorderInit';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Mic } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 import Header from './Header';
-import ToneSelector from './ToneSelector';
-import PaywallDialog from './PaywallDialog';
-import MainContent from './MainContent';
 import RecordingSection from './RecordingSection';
-import LoadingSpinner from './LoadingSpinner';
+import MainContent from './MainContent';
+import ToneSelector from './ToneSelector';
 import type { SavedPost } from '@/types/post';
-
-type Personality = 'direct' | 'friendly' | 'enthusiastic';
+import { useVoiceRecorderInit } from '@/hooks/useVoiceRecorderInit';
 
 interface VoiceRecorderProps {
   savedPosts: SavedPost[];
-  onSavePost: (content: string) => boolean;
+  onSavePost: (content: string) => void;
   onDeletePost: (id: string) => void;
 }
 
 const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderProps) => {
-  const [isGenerating, setIsGenerating] = React.useState(false);
-  const [personality, setPersonality] = React.useState<Personality>('friendly');
-  const [variations, setVariations] = React.useState<string[]>([]);
-  const [selectedVariation, setSelectedVariation] = React.useState('');
-  const [transcript, setTranscript] = React.useState('');
-  const [processingTranscript, setProcessingTranscript] = React.useState('');
-  const { toast } = useToast();
-  
+  console.log('VoiceRecorder rendering with savedPosts:', savedPosts);
+  const [variations, setVariations] = useState<string[]>([]);
+  const [selectedVariation, setSelectedVariation] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [processingTranscript, setProcessingTranscript] = useState('');
+  const [personality, setPersonality] = useState('friendly');
+
   const {
-    recordingCount,
-    setRecordingCount,
-    showPaywall,
-    setShowPaywall,
-    isLoading
+    isRecording,
+    recordingTime,
+    isProcessing,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+    generateVariations,
   } = useVoiceRecorderInit();
 
   const handleLogoClick = () => {
@@ -47,94 +45,54 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
   };
 
   const handleTranscriptGenerated = async (newTranscript: string) => {
-    // If we're already processing this transcript or generating variations, don't proceed
-    if (processingTranscript === newTranscript || isGenerating) {
-      console.log('Skipping variation generation - already processing or generating');
+    console.log('New transcript generated:', newTranscript);
+    if (newTranscript === processingTranscript) {
+      console.log('This transcript is already being processed');
       return;
     }
 
-    if (!newTranscript || newTranscript.trim() === '') {
-      console.log('No transcript available');
-      toast({
-        title: "Error",
-        description: "No speech was detected. Please try recording again.",
-        variant: "destructive",
-      });
-      return;
-    }
+    setTranscript(newTranscript);
+    setProcessingTranscript(newTranscript);
+    setIsGenerating(true);
 
     try {
-      setIsGenerating(true);
-      setProcessingTranscript(newTranscript);
-      setTranscript(newTranscript);
-      console.log('Generating variations with personality:', personality);
       const newVariations = await generateVariations(newTranscript, personality);
       console.log('Generated variations:', newVariations);
       setVariations(newVariations);
-      setSelectedVariation(newVariations[0]);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      const newCount = recordingCount + 1;
-      const { error } = await supabase
-        .from('profiles')
-        .update({ recording_count: newCount })
-        .eq('id', session.user.id);
-
-      if (error) {
-        console.error('Error updating recording count:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update recording count.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setRecordingCount(newCount);
-      if (newCount >= 3) {
-        setShowPaywall(true);
-      }
+      setSelectedVariation(newVariations[0] || '');
     } catch (error) {
       console.error('Error generating variations:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate variations. Please try again.",
+        description: "Failed to generate variations. Please try again.",
         variant: "destructive",
       });
-      // Reset processing state on error
-      setProcessingTranscript('');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="max-w-md mx-auto p-6">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-md mx-auto p-6 space-y-6">
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Header onLogoClick={handleLogoClick} />
       
-      <ToneSelector 
-        personality={personality}
-        onPersonalityChange={setPersonality}
-      />
+      <div className="mt-8 space-y-8">
+        <ToneSelector
+          personality={personality}
+          onPersonalityChange={setPersonality}
+          disabled={isRecording || isProcessing || isGenerating}
+        />
 
-      <RecordingSection
-        isGenerating={isGenerating}
-        onTranscriptGenerated={handleTranscriptGenerated}
-        recordingCount={recordingCount}
-        onShowPaywall={() => setShowPaywall(true)}
-      />
+        <RecordingSection
+          isRecording={isRecording}
+          recordingTime={recordingTime}
+          isProcessing={isProcessing}
+          onStartRecording={startRecording}
+          onStopRecording={stopRecording}
+          onCancelRecording={cancelRecording}
+          onTranscriptGenerated={handleTranscriptGenerated}
+        />
 
-      {!isGenerating && variations.length > 0 && (
         <MainContent
           transcript={transcript}
           variations={variations}
@@ -145,12 +103,7 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
           savedPosts={savedPosts}
           onDeletePost={onDeletePost}
         />
-      )}
-
-      <PaywallDialog 
-        isOpen={showPaywall} 
-        onClose={() => setShowPaywall(false)} 
-      />
+      </div>
     </div>
   );
 };
