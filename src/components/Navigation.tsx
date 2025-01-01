@@ -6,8 +6,8 @@ const Navigation = () => {
   const location = useLocation();
 
   return (
-    <div className="w-full bg-background">
-      <nav className="bg-background border-none">
+    <div className="w-full bg-slate-50">
+      <nav className="bg-slate-50 border-none">
         <div className="container mx-auto px-4">
           <div className="flex space-x-4 py-4">
             <Link

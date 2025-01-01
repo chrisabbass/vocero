@@ -2,7 +2,7 @@ import VoiceRecorder from "@/components/VoiceRecorder";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-slate-50 py-12">
+    <div className="min-h-screen bg-slate-50">
       <VoiceRecorder />
     </div>
   );
