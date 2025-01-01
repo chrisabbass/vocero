@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
-import { useSavedPosts } from '@/hooks/useSavedPosts';
 import { generateVariations } from '@/services/anthropic';
 import { supabase } from '@/integrations/supabase/client';
+import { usePostManagement } from '@/hooks/usePostManagement';
 import RecordButton from './RecordButton';
 import Header from './Header';
 import ToneSelector from './ToneSelector';
@@ -14,15 +14,23 @@ import LoadingSpinner from './LoadingSpinner';
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
 
 const VoiceRecorder = () => {
-  const [variations, setVariations] = useState<string[]>([]);
-  const [selectedVariation, setSelectedVariation] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [personality, setPersonality] = useState<Personality>('friendly');
   const [recordingCount, setRecordingCount] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { savedPosts, savePost, deletePost } = useSavedPosts();
+  
+  const { 
+    variations,
+    setVariations,
+    selectedVariation,
+    setSelectedVariation,
+    savedPosts,
+    handleSavePost,
+    deletePost 
+  } = usePostManagement();
+
   const { 
     isRecording, 
     transcript, 
@@ -179,31 +187,7 @@ const VoiceRecorder = () => {
           onVariationChange={setSelectedVariation}
           onTranscriptChange={setTranscript}
           isGenerating={isGenerating}
-          onSavePost={() => {
-            const textToSave = selectedVariation || transcript;
-            if (!textToSave) {
-              toast({
-                title: "Error",
-                description: "No content to save",
-                variant: "destructive",
-              });
-              return;
-            }
-
-            const saved = savePost(textToSave);
-            if (saved) {
-              toast({
-                title: "Success",
-                description: "Post saved successfully",
-              });
-            } else {
-              toast({
-                title: "Error",
-                description: "Maximum number of saved posts reached (10)",
-                variant: "destructive",
-              });
-            }
-          }}
+          onSavePost={handleSavePost}
           savedPosts={savedPosts}
           onDeletePost={deletePost}
         />

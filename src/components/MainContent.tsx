@@ -2,6 +2,7 @@ import React from 'react';
 import VariationsSection from './VariationsSection';
 import PostActions from './PostActions';
 import SavedPosts from './SavedPosts';
+import type { SavedPost } from '@/types/post';
 
 interface MainContentProps {
   transcript: string;
@@ -11,8 +12,8 @@ interface MainContentProps {
   onTranscriptChange: (transcript: string) => void;
   isGenerating: boolean;
   onSavePost: () => void;
-  savedPosts: string[];
-  onDeletePost: (index: number) => void;
+  savedPosts: SavedPost[];
+  onDeletePost: (id: string) => void;
 }
 
 const MainContent = ({
