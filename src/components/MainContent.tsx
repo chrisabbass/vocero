@@ -41,11 +41,13 @@ const MainContent = ({
       )}
 
       {selectedVariation && (
-        <PostActions
-          textToShare={selectedVariation}
-          onSave={() => onSavePost(selectedVariation)}
-          isSavedPost={false}
-        />
+        <div className="flex justify-center w-full">
+          <PostActions
+            textToShare={selectedVariation}
+            onSave={() => onSavePost(selectedVariation)}
+            isSavedPost={false}
+          />
+        </div>
       )}
 
       <SavedPosts posts={savedPosts} onDelete={onDeletePost} />

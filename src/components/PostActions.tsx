@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Share2, Save, Copy } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
@@ -63,7 +63,7 @@ const PostActions = ({ textToShare, onSave, isSavedPost }: PostActionsProps) => 
   };
 
   return (
-    <div className="flex justify-end space-x-2 mt-2">
+    <div className="flex items-center gap-2">
       {!isSavedPost && (
         <Button
           variant="outline"
