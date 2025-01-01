@@ -17,12 +17,19 @@ interface SavedPostsProps {
 }
 
 const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
+  console.log('Rendering SavedPosts with posts:', posts); // Debug log
+
+  if (!Array.isArray(posts)) {
+    console.error('Posts is not an array:', posts);
+    return null;
+  }
+
   return (
     <div className="mt-6 border rounded-lg p-4">
       <Carousel
         opts={{
           align: "start",
-          loop: true,
+          loop: posts.length > 1,
         }}
         className="w-full"
       >
@@ -44,8 +51,8 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
           <div className="relative">
             <CarouselContent>
               {posts.map((post) => (
-                <CarouselItem key={post.id}>
-                  <div className="flex flex-col space-y-2 p-2 border rounded">
+                <CarouselItem key={post.id} className="px-1">
+                  <div className="flex flex-col space-y-2 p-4 border rounded-lg bg-white shadow-sm">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className="text-sm">{post.content}</p>
@@ -56,7 +63,10 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDelete(post.id)}
+                        onClick={() => {
+                          console.log('Deleting post:', post.id); // Debug log
+                          onDelete(post.id);
+                        }}
                         className="text-red-500 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
