@@ -44,9 +44,13 @@ const Navigation = () => {
     navigate('/login');
   };
 
-  const handleAnalyticsClick = () => {
+  const handleAnalyticsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Analytics clicked, authenticated:', isAuthenticated);
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { state: { from: '/analytics' } });
+    } else {
+      navigate('/analytics');
     }
   };
 
@@ -68,8 +72,8 @@ const Navigation = () => {
                 <span>Home</span>
               </Link>
               <Link
-                to={isAuthenticated ? "/analytics" : "#"}
-                onClick={!isAuthenticated ? handleAnalyticsClick : undefined}
+                to="/analytics"
+                onClick={handleAnalyticsClick}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
                   location.pathname === '/analytics'
                     ? 'bg-primary text-primary-foreground'
