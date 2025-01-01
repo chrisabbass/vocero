@@ -3,6 +3,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useSavedPosts } from '@/hooks/useSavedPosts';
 import { generateVariations } from '@/services/anthropic';
+import { supabase } from '@/integrations/supabase/client';
 import RecordButton from './RecordButton';
 import VariationsSection from './VariationsSection';
 import PostActions from './PostActions';
@@ -18,10 +19,7 @@ const VoiceRecorder = () => {
   const [selectedVariation, setSelectedVariation] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [personality, setPersonality] = useState<Personality>('friendly');
-  const [recordingCount, setRecordingCount] = useState(() => {
-    const stored = localStorage.getItem('recordingCount');
-    return stored ? parseInt(stored, 10) : 0;
-  });
+  const [recordingCount, setRecordingCount] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const { toast } = useToast();
   const { savedPosts, savePost, deletePost } = useSavedPosts();
@@ -32,6 +30,31 @@ const VoiceRecorder = () => {
     stopRecording,
     setTranscript 
   } = useVoiceRecorder();
+
+  useEffect(() => {
+    const fetchRecordingCount = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('recording_count')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching recording count:', error);
+        return;
+      }
+
+      setRecordingCount(data?.recording_count || 0);
+      if ((data?.recording_count || 0) >= 3) {
+        setShowPaywall(true);
+      }
+    };
+
+    fetchRecordingCount();
+  }, []);
 
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting state');
@@ -66,10 +89,27 @@ const VoiceRecorder = () => {
       setVariations(newVariations);
       setSelectedVariation(newVariations[0]);
 
-      // Increment recording count after successful generation
+      // Update recording count in the database
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
       const newCount = recordingCount + 1;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ recording_count: newCount })
+        .eq('id', session.user.id);
+
+      if (error) {
+        console.error('Error updating recording count:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update recording count.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setRecordingCount(newCount);
-      localStorage.setItem('recordingCount', newCount.toString());
 
       // Show paywall if limit reached
       if (newCount >= 3) {

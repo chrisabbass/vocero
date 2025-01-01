@@ -48,6 +48,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          recording_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          recording_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          recording_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       secrets: {
         Row: {
           created_at: string | null
