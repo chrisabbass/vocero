@@ -6,7 +6,6 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -53,10 +52,10 @@ serve(async (req) => {
 
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
-    const audioBlob = new Blob([uint8Array], { type: audioFile.type });
-    openAIFormData.append('file', audioBlob, 'audio.wav');
+    const audioBlob = new Blob([uint8Array], { type: 'audio/webm' });
+    openAIFormData.append('file', audioBlob, 'audio.webm');
     openAIFormData.append('model', 'whisper-1');
-    openAIFormData.append('language', 'en'); // Specify English for better accuracy
+    openAIFormData.append('language', 'en');
     openAIFormData.append('response_format', 'json');
 
     console.log('Sending request to OpenAI Whisper API');
@@ -70,22 +69,10 @@ serve(async (req) => {
       body: openAIFormData,
     });
 
-    console.log('OpenAI API response status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', errorText);
-      
-      // More detailed error handling
-      if (response.status === 401) {
-        throw new Error('Authentication failed with OpenAI API');
-      } else if (response.status === 400) {
-        throw new Error('Invalid audio format or corrupted file');
-      } else if (response.status === 413) {
-        throw new Error('Audio file too large');
-      } else {
-        throw new Error(`OpenAI API error: ${errorText}`);
-      }
+      throw new Error(`OpenAI API error: ${errorText}`);
     }
 
     const data = await response.json();
@@ -100,19 +87,13 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in whisper-transcribe function:', error);
-    
-    // Send a more user-friendly error message
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return new Response(
-      JSON.stringify({ 
-        error: errorMessage,
-        details: error instanceof Error ? error.stack : 'No stack trace available',
-        timestamp: new Date().toISOString()
-      }),
-      { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: error.stack || 'No stack trace available',
+      timestamp: new Date().toISOString()
+    }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
