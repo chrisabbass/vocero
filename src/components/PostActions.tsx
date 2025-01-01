@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Share2, Save, Copy } from 'lucide-react';
+import { Share2, Save, Copy, Twitter, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,8 +15,8 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const handleShare = async () => {
-    console.log('Sharing post with text:', textToShare);
+  const handleShare = async (platform?: 'twitter' | 'linkedin') => {
+    console.log('Sharing post with text:', textToShare, 'to platform:', platform);
     if (!textToShare || textToShare.trim() === '') {
       console.error('No content to share');
       toast({
@@ -30,25 +30,30 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
     setIsGeneratingUrl(true);
 
     try {
-      if (isMobile && navigator.share) {
+      if (platform === 'twitter') {
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(textToShare)}`;
+        window.open(twitterUrl, '_blank');
+        console.log('Opened Twitter share window');
+      } else if (platform === 'linkedin') {
+        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(textToShare)}`;
+        window.open(linkedinUrl, '_blank');
+        console.log('Opened LinkedIn share window');
+      } else if (isMobile && navigator.share) {
         console.log('Using native share on mobile');
         await navigator.share({
           text: textToShare,
         });
         console.log('Successfully shared via native share');
-        toast({
-          title: "Success",
-          description: "Content shared successfully",
-        });
       } else {
         console.log('Using clipboard share');
         await navigator.clipboard.writeText(textToShare);
         console.log('Successfully copied to clipboard');
-        toast({
-          title: "Success",
-          description: "Content copied to clipboard",
-        });
       }
+      
+      toast({
+        title: "Success",
+        description: platform ? `Opening ${platform} to share` : "Content copied to clipboard",
+      });
     } catch (error) {
       console.error('Error sharing:', error);
       const errorMessage = error instanceof Error ? error.message : "Failed to share content";
@@ -117,9 +122,29 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
       )}
 
       <Button
+        variant="outline"
+        size="sm"
+        onClick={() => handleShare('twitter')}
+        className="flex items-center gap-2"
+      >
+        <Twitter className="w-4 h-4" />
+        Twitter
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => handleShare('linkedin')}
+        className="flex items-center gap-2"
+      >
+        <Linkedin className="w-4 h-4" />
+        LinkedIn
+      </Button>
+
+      <Button
         variant="default"
         size="sm"
-        onClick={handleShare}
+        onClick={() => handleShare()}
         disabled={isGeneratingUrl}
         className="flex items-center gap-2"
       >
