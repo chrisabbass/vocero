@@ -19,14 +19,16 @@ export const generateVariations = async (text: string, personality: string = 'fr
     console.log('Input text:', text);
 
     // Fetch the API key from Supabase
-    const { data: { value: apiKey }, error: keyError } = await supabase.rpc('get_secret', {
+    const { data, error: keyError } = await supabase.rpc('get_secret', {
       name: 'OPENAI_API_KEY'
     });
 
-    if (keyError || !apiKey) {
+    if (keyError || !data) {
       console.error('Error fetching OpenAI API key:', keyError);
       throw new Error('Failed to fetch OpenAI API key');
     }
+
+    const apiKey = data as string;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -35,7 +37,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4",
         messages: [{
           role: "system",
           content: getPersonalityPrompt(personality)
