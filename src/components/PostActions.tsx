@@ -16,7 +16,17 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
   const isMobile = useIsMobile();
 
   const handleShare = async () => {
-    console.log('Sharing post...');
+    console.log('Sharing post with text:', textToShare);
+    if (!textToShare || textToShare.trim() === '') {
+      console.error('No content to share');
+      toast({
+        title: "Error",
+        description: "No content available to share",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGeneratingUrl(true);
 
     try {
@@ -25,6 +35,7 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
         await navigator.share({
           text: textToShare,
         });
+        console.log('Successfully shared via native share');
         toast({
           title: "Success",
           description: "Content shared successfully",
@@ -32,6 +43,7 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
       } else {
         console.log('Using clipboard share');
         await navigator.clipboard.writeText(textToShare);
+        console.log('Successfully copied to clipboard');
         toast({
           title: "Success",
           description: "Content copied to clipboard",
@@ -39,9 +51,10 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
       }
     } catch (error) {
       console.error('Error sharing:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to share content";
       toast({
         title: "Error",
-        description: "Failed to share content",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -50,18 +63,30 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
   };
 
   const handleCopy = async () => {
-    console.log('Copying to clipboard...');
+    console.log('Copying to clipboard:', textToShare);
+    if (!textToShare || textToShare.trim() === '') {
+      console.error('No content to copy');
+      toast({
+        title: "Error",
+        description: "No content available to copy",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(textToShare);
+      console.log('Successfully copied to clipboard');
       toast({
         title: "Success",
         description: "Content copied to clipboard",
       });
     } catch (error) {
       console.error('Error copying:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to copy content";
       toast({
         title: "Error",
-        description: "Failed to copy content",
+        description: errorMessage,
         variant: "destructive",
       });
     }
