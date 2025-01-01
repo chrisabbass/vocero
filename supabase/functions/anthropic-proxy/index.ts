@@ -8,12 +8,18 @@ const corsHeaders = {
 
 // Helper function to verify environment setup
 function verifyEnvironment() {
-  const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!ANTHROPIC_API_KEY) {
-    console.error('Critical configuration error: ANTHROPIC_API_KEY is not set');
-    throw new Error('Configuration error: Missing API key');
+  try {
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    console.log('Checking for ANTHROPIC_API_KEY:', ANTHROPIC_API_KEY ? 'Present' : 'Missing');
+    
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('Configuration error: Missing API key');
+    }
+    return ANTHROPIC_API_KEY;
+  } catch (error) {
+    console.error('Error accessing environment variable:', error);
+    throw error;
   }
-  return ANTHROPIC_API_KEY;
 }
 
 // Helper function to create variations with retry logic
@@ -82,8 +88,26 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Request received:', {
+      method: req.method,
+      url: req.url,
+      headers: Object.fromEntries(req.headers.entries())
+    });
+
     // Verify environment before processing request
-    verifyEnvironment();
+    try {
+      verifyEnvironment();
+    } catch (error) {
+      console.error('Environment verification failed:', error);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Server configuration error. Please contact support.' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
+    }
 
     const { messages, systemPrompt } = await req.json();
     console.log('Processing request with message count:', messages.length);
