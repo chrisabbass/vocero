@@ -3,14 +3,30 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Index from "./pages/Index";
-import Analytics from "./pages/Analytics";
-import Login from "./pages/Login";
 import Navigation from "./components/Navigation";
 
-const queryClient = new QueryClient();
+// Lazy load pages
+const Index = lazy(() => import("./pages/Index"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Login = lazy(() => import("./pages/Login"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes
+    },
+  },
+});
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+  </div>
+);
 
 // Protected route wrapper for routes that require authentication
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -32,7 +48,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (isAuthenticated === null) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return isAuthenticated ? 
@@ -46,25 +62,27 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <Routes>
-          {/* Main route is public */}
-          <Route path="/" element={
-            <>
-              <Navigation />
-              <Index />
-            </>
-          } />
-          <Route path="/login" element={<Login />} />
-          {/* Analytics requires authentication */}
-          <Route path="/analytics" element={
-            <ProtectedRoute>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {/* Main route is public */}
+            <Route path="/" element={
               <>
                 <Navigation />
-                <Analytics />
+                <Index />
               </>
-            </ProtectedRoute>
-          } />
-        </Routes>
+            } />
+            <Route path="/login" element={<Login />} />
+            {/* Analytics requires authentication */}
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <>
+                  <Navigation />
+                  <Analytics />
+                </>
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </Suspense>
       </TooltipProvider>
     </QueryClientProvider>
   </BrowserRouter>

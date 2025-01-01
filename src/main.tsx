@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+// Add performance monitoring
+const reportWebVitals = (metric: any) => {
+  console.log(metric);
+};
+
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Failed to find the root element');
 
@@ -11,3 +16,6 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>
 );
+
+// Monitor performance
+reportWebVitals(window.performance);
