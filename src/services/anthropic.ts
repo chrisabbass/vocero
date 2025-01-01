@@ -14,10 +14,11 @@ export const generateVariations = async (text: string, personality: string = 'fr
     }
 
     const apiKey = await getAnthropicApiKey();
+    console.log('Successfully retrieved API key, making request to Anthropic...');
+    
     const systemPrompt = getPersonalityPrompt(personality);
     const userPrompt = `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${text}`;
 
-    console.log('Making API request to Anthropic...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -41,16 +42,16 @@ export const generateVariations = async (text: string, personality: string = 'fr
       })
     });
 
-    console.log('API Response status:', response.status);
+    console.log('Received response from Anthropic API:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('API Error Response:', errorText);
+      console.error('Anthropic API error response:', errorText);
       throw new Error(`Anthropic API error (${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('API Response data:', data);
+    console.log('Successfully parsed API response');
 
     const content = data.content?.[0]?.text;
     if (!content) {
