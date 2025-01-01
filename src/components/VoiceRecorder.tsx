@@ -8,6 +8,7 @@ import ToneSelector from './ToneSelector';
 import PaywallDialog from './PaywallDialog';
 import MainContent from './MainContent';
 import RecordingSection from './RecordingSection';
+import LoadingSpinner from './LoadingSpinner';
 import type { SavedPost } from '@/types/post';
 
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
@@ -23,6 +24,7 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
   const [personality, setPersonality] = React.useState<Personality>('friendly');
   const [variations, setVariations] = React.useState<string[]>([]);
   const [selectedVariation, setSelectedVariation] = React.useState('');
+  const [transcript, setTranscript] = React.useState('');
   const { toast } = useToast();
   
   const {
@@ -38,10 +40,11 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     setVariations([]);
     setSelectedVariation('');
     setIsGenerating(false);
+    setTranscript('');
   };
 
-  const handleTranscriptGenerated = async (transcript: string) => {
-    if (!transcript || transcript.trim() === '') {
+  const handleTranscriptGenerated = async (newTranscript: string) => {
+    if (!newTranscript || newTranscript.trim() === '') {
       console.log('No transcript available');
       toast({
         title: "Error",
@@ -53,8 +56,9 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
 
     try {
       setIsGenerating(true);
+      setTranscript(newTranscript);
       console.log('Generating variations with personality:', personality);
-      const newVariations = await generateVariations(transcript, personality);
+      const newVariations = await generateVariations(newTranscript, personality);
       console.log('Generated variations:', newVariations);
       setVariations(newVariations);
       setSelectedVariation(newVariations[0]);
@@ -120,6 +124,7 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
 
       {!isGenerating && variations.length > 0 && (
         <MainContent
+          transcript={transcript}
           variations={variations}
           selectedVariation={selectedVariation}
           onVariationChange={setSelectedVariation}
