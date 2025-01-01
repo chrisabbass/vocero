@@ -33,7 +33,7 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
         }}
         className="w-full max-w-md mx-auto"
       >
-        <div className="flex items-center justify-between mb-4 px-4">
+        <div className="flex items-center justify-center mb-4 px-4">
           <h2 className="text-lg font-semibold">
             Saved Posts ({posts.length}/10)
           </h2>
