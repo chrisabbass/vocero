@@ -44,6 +44,12 @@ const Navigation = () => {
     navigate('/login');
   };
 
+  const handleAnalyticsClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="w-full bg-slate-50">
       <nav className="bg-slate-50 border-none">
@@ -61,19 +67,18 @@ const Navigation = () => {
                 <Home className="h-4 w-4" />
                 <span>Home</span>
               </Link>
-              {isAuthenticated && (
-                <Link
-                  to="/analytics"
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-                    location.pathname === '/analytics'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted'
-                  }`}
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Analytics</span>
-                </Link>
-              )}
+              <Link
+                to={isAuthenticated ? "/analytics" : "#"}
+                onClick={!isAuthenticated ? handleAnalyticsClick : undefined}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                  location.pathname === '/analytics'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span>Analytics</span>
+              </Link>
             </div>
             {isAuthenticated ? (
               <Button

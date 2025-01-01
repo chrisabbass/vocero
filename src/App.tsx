@@ -35,7 +35,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <div>Loading...</div>;
   }
 
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+  return isAuthenticated ? 
+    <>{children}</> : 
+    <Navigate to="/login" state={{ from: '/analytics' }} replace />;
 };
 
 const App = () => (
@@ -45,7 +47,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <Routes>
-          {/* Main route is now public */}
+          {/* Main route is public */}
           <Route path="/" element={
             <>
               <Navigation />
@@ -53,7 +55,7 @@ const App = () => (
             </>
           } />
           <Route path="/login" element={<Login />} />
-          {/* Analytics still requires authentication */}
+          {/* Analytics requires authentication */}
           <Route path="/analytics" element={
             <ProtectedRoute>
               <>
