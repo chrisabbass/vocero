@@ -26,21 +26,27 @@ export const useVoiceRecorderInit = () => {
   };
 
   const generateVariations = async (transcript: string, personality: string) => {
+    console.log('Generating variations for transcript:', transcript);
+    console.log('Using personality:', personality);
+    
     try {
-      const response = await fetch('https://nmjmurbaaevmakymqiyc.supabase.co/functions/v1/anthropic-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ transcript, personality }),
+      const response = await supabase.functions.invoke('anthropic-proxy', {
+        body: { transcript, personality }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate variations');
+      if (response.error) {
+        console.error('Error from edge function:', response.error);
+        throw new Error(response.error.message || 'Failed to generate variations');
       }
 
-      const data = await response.json();
-      return data.variations || [];
+      console.log('Received response:', response.data);
+      
+      if (!response.data?.variations || !Array.isArray(response.data.variations)) {
+        console.error('Invalid response format:', response.data);
+        throw new Error('Invalid response format from API');
+      }
+
+      return response.data.variations;
     } catch (error) {
       console.error('Error generating variations:', error);
       throw error;
