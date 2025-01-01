@@ -2,7 +2,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface VariationsSectionProps {
   variations: string[];
@@ -22,12 +22,7 @@ const VariationsSection = ({
   isGenerating
 }: VariationsSectionProps) => {
   if (isGenerating) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-        <span className="ml-2">Generating variations...</span>
-      </div>
-    );
+    return <LoadingSpinner message="Generating variations..." />;
   }
 
   return (
