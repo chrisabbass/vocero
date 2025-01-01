@@ -34,13 +34,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Checking authentication status...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error checking auth status:', error);
+      }
+      console.log('Session status:', session ? 'Active' : 'No session');
       setIsAuthenticated(!!session);
     };
     
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, 'Session:', session ? 'Active' : 'None');
       setIsAuthenticated(!!session);
     });
 
@@ -48,44 +54,64 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (isAuthenticated === null) {
+    console.log('Authentication status still loading...');
     return <LoadingSpinner />;
   }
 
+  console.log('Final auth status:', isAuthenticated ? 'Authenticated' : 'Not authenticated');
   return isAuthenticated ? 
     <>{children}</> : 
     <Navigate to="/login" state={{ from: '/analytics' }} replace />;
 };
 
-const App = () => (
-  <BrowserRouter>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Main route is public */}
-            <Route path="/" element={
-              <>
-                <Navigation />
-                <Index />
-              </>
-            } />
-            <Route path="/login" element={<Login />} />
-            {/* Analytics requires authentication */}
-            <Route path="/analytics" element={
-              <ProtectedRoute>
+const App = () => {
+  console.log('App component rendering');
+  
+  useEffect(() => {
+    const checkSupabaseConnection = async () => {
+      try {
+        const { data, error } = await supabase.from('profiles').select('*').limit(1);
+        console.log('Supabase connection test:', error ? 'Failed' : 'Successful');
+        if (error) console.error('Supabase connection error:', error);
+      } catch (err) {
+        console.error('Error testing Supabase connection:', err);
+      }
+    };
+    
+    checkSupabaseConnection();
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Main route is public */}
+              <Route path="/" element={
                 <>
                   <Navigation />
-                  <Analytics />
+                  <Index />
                 </>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </Suspense>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </BrowserRouter>
-);
+              } />
+              <Route path="/login" element={<Login />} />
+              {/* Analytics requires authentication */}
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <Analytics />
+                  </>
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Suspense>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;
