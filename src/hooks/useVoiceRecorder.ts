@@ -14,14 +14,15 @@ export const useVoiceRecorder = () => {
       
       mediaRecorder.current.ondataavailable = async (e) => {
         const audioBlob = new Blob([e.data], { type: 'audio/wav' });
-        // Simulated transcription
+        // For testing purposes, we'll set a simulated transcript
         const simulatedTranscript = "This is a simulated transcription of your voice note. In a real implementation, this would be the actual transcribed text from your voice recording.";
+        console.log('Setting transcript:', simulatedTranscript);
         setTranscript(simulatedTranscript);
       };
 
       mediaRecorder.current.start();
       setIsRecording(true);
-      
+      setTranscript(''); // Clear previous transcript
       console.log('Recording started');
     } catch (err) {
       console.error('Error accessing microphone:', err);

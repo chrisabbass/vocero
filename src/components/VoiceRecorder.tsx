@@ -28,22 +28,41 @@ const VoiceRecorder = () => {
   } = useVoiceRecorder();
 
   const handleStopRecording = async () => {
+    console.log('Stopping recording...');
     stopRecording();
-    try {
-      setIsGenerating(true);
-      const newVariations = await generateVariations(transcript, personality);
-      setVariations(newVariations);
-      setSelectedVariation(newVariations[0]);
-    } catch (error) {
-      console.error('Error generating variations:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate variations. Please check if your Anthropic API key is set correctly.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    
+    // Wait a brief moment for the transcript to be set
+    setTimeout(async () => {
+      console.log('Current transcript:', transcript);
+      
+      if (!transcript || transcript.trim() === '') {
+        console.log('No transcript available');
+        toast({
+          title: "Error",
+          description: "No speech was detected. Please try recording again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        setIsGenerating(true);
+        console.log('Generating variations with personality:', personality);
+        const newVariations = await generateVariations(transcript, personality);
+        console.log('Generated variations:', newVariations);
+        setVariations(newVariations);
+        setSelectedVariation(newVariations[0]);
+      } catch (error) {
+        console.error('Error generating variations:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to generate variations. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGenerating(false);
+      }
+    }, 500); // Small delay to ensure transcript is set
   };
 
   const handleSavePost = () => {
