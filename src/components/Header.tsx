@@ -18,7 +18,7 @@ const Header = ({ onLogoClick }: HeaderProps) => {
         <Speech className="w-8 h-8 text-purple-600" />
         Vocero
       </h1>
-      <p className="text-slate-600 mb-6">Transform Voice to Influence</p>
+      <p className="text-slate-600 mb-6">Your AI Social Media Assistant</p>
     </div>
   );
 };
