@@ -25,7 +25,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
 
     if (!apiKey) {
       console.error('No API key received');
-      throw new Error('Anthropic API key not found in Supabase secrets. Please set it up.');
+      throw new Error('Anthropic API key not found in Supabase secrets. Please check if you have added it correctly.');
     }
 
     console.log('API key retrieved successfully');
