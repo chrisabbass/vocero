@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, Home, LogOut } from 'lucide-react';
+import { BarChart3, Home, LogOut, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
@@ -9,11 +9,27 @@ const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Error logging out:', error);
       toast({
@@ -22,6 +38,10 @@ const Navigation = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
   };
 
   return (
@@ -41,27 +61,41 @@ const Navigation = () => {
                 <Home className="h-4 w-4" />
                 <span>Home</span>
               </Link>
-              <Link
-                to="/analytics"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-                  location.pathname === '/analytics'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-muted'
-                }`}
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span>Analytics</span>
-              </Link>
+              {isAuthenticated && (
+                <Link
+                  to="/analytics"
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                    location.pathname === '/analytics'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-muted'
+                  }`}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Analytics</span>
+                </Link>
+              )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center space-x-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogin}
+                className="flex items-center space-x-2"
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Login</span>
+              </Button>
+            )}
           </div>
         </div>
       </nav>

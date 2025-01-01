@@ -31,7 +31,10 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-semibold text-center mb-6">Welcome to Postful</h1>
+        <h1 className="text-2xl font-semibold text-center mb-2">Welcome Back!</h1>
+        <p className="text-center text-gray-600 mb-6">
+          Sign in to save your recordings and access analytics
+        </p>
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}

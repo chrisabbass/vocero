@@ -12,7 +12,7 @@ import Navigation from "./components/Navigation";
 
 const queryClient = new QueryClient();
 
-// Protected route wrapper
+// Protected route wrapper for routes that require authentication
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
@@ -46,14 +46,14 @@ const App = () => (
         <Sonner />
         <Routes>
           <Route path="/login" element={<Login />} />
+          {/* Main route is now public */}
           <Route path="/" element={
-            <ProtectedRoute>
-              <>
-                <Navigation />
-                <Index />
-              </>
-            </ProtectedRoute>
+            <>
+              <Navigation />
+              <Index />
+            </>
           } />
+          {/* Analytics still requires authentication */}
           <Route path="/analytics" element={
             <ProtectedRoute>
               <>
