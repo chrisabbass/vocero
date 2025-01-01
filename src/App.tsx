@@ -45,7 +45,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <Routes>
-          <Route path="/login" element={<Login />} />
           {/* Main route is now public */}
           <Route path="/" element={
             <>
@@ -53,6 +52,7 @@ const App = () => (
               <Index />
             </>
           } />
+          <Route path="/login" element={<Login />} />
           {/* Analytics still requires authentication */}
           <Route path="/analytics" element={
             <ProtectedRoute>
