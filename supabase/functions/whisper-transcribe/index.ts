@@ -6,6 +6,7 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -20,7 +21,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Starting transcription process with OpenAI API key:', openAIApiKey ? 'Present' : 'Missing');
+    console.log('Starting transcription process');
     
     // Get the form data from the request
     const formData = await req.formData();
@@ -37,7 +38,7 @@ serve(async (req) => {
       size: audioFile.size
     });
 
-    // Convert the file to an array buffer and then to Uint8Array
+    // Convert the file to array buffer
     const arrayBuffer = await audioFile.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 

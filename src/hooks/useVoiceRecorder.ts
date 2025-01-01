@@ -36,10 +36,15 @@ export const useVoiceRecorder = () => {
           const response = await fetch('https://nmjmurbaaevmakymqiyc.supabase.co/functions/v1/whisper-transcribe', {
             method: 'POST',
             body: formData,
+            // Add mode: 'cors' and credentials: 'omit' for better CORS handling
+            mode: 'cors',
+            credentials: 'omit',
           });
 
           if (!response.ok) {
-            throw new Error('Failed to transcribe audio');
+            const errorData = await response.json();
+            console.error('Transcription error response:', errorData);
+            throw new Error(errorData.error || 'Failed to transcribe audio');
           }
 
           const data = await response.json();
@@ -49,7 +54,7 @@ export const useVoiceRecorder = () => {
           console.error('Transcription error:', error);
           toast({
             title: "Error",
-            description: "Failed to transcribe audio. Please try again.",
+            description: error instanceof Error ? error.message : "Failed to transcribe audio. Please try again.",
             variant: "destructive",
           });
         }
