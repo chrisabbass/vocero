@@ -1,10 +1,23 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export const generateVariations = async (text: string) => {
   console.log('Generating variations for text:', text);
+  
+  // Get the API key from Supabase
+  const { data: { secret: apiKey }, error: secretError } = await supabase.rpc('get_secret', {
+    name: 'OPENAI_API_KEY'
+  });
+
+  if (secretError || !apiKey) {
+    console.error('Error fetching OpenAI API key:', secretError);
+    throw new Error('Failed to fetch OpenAI API key. Please ensure it is set in Supabase secrets.');
+  }
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.OPENAI_API_KEY}`
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
       model: "gpt-4",
