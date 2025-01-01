@@ -70,7 +70,9 @@ const VoiceRecorder = () => {
   return (
     <div className="max-w-md mx-auto p-6 space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-2">Voice Note to Post</h1>
+        <h1 className="text-4xl font-bold italic mb-2" style={{ fontFamily: 'Inter', letterSpacing: '-0.025em' }}>
+          Postful
+        </h1>
         <p className="text-slate-600 mb-6">Record your voice to create a social post</p>
       </div>
 
