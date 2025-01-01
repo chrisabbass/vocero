@@ -23,6 +23,8 @@ interface VoiceRecorderProps {
 const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderProps) => {
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [personality, setPersonality] = React.useState<Personality>('friendly');
+  const [variations, setVariations] = React.useState<string[]>([]);
+  const [selectedVariation, setSelectedVariation] = React.useState('');
   const { toast } = useToast();
   
   const {
@@ -32,23 +34,6 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     setShowPaywall,
     isLoading
   } = useVoiceRecorderInit();
-  
-  const { 
-    variations,
-    setVariations,
-    selectedVariation,
-    setSelectedVariation,
-  } = React.useState<{
-    variations: string[];
-    setVariations: React.Dispatch<React.SetStateAction<string[]>>;
-    selectedVariation: string;
-    setSelectedVariation: React.Dispatch<React.SetStateAction<string>>;
-  }>({
-    variations: [],
-    setVariations: React.useState<string[]>([])[1],
-    selectedVariation: '',
-    setSelectedVariation: React.useState<string>('')[1],
-  });
 
   const { 
     isRecording, 
@@ -59,6 +44,7 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
   } = useVoiceRecorder();
 
   console.log('VoiceRecorder savedPosts:', savedPosts); // Debug log
+  console.log('VoiceRecorder variations:', variations); // Debug log
 
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting state');
