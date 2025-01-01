@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Buffer } from "https://deno.land/std@0.168.0/node/buffer.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
@@ -21,7 +20,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Received transcription request');
+    console.log('Starting transcription process with OpenAI API key:', openAIApiKey ? 'Present' : 'Missing');
     
     // Get the form data from the request
     const formData = await req.formData();
@@ -32,11 +31,17 @@ serve(async (req) => {
       throw new Error('No audio file provided');
     }
 
-    console.log('Audio file received, size:', audioFile.size);
+    console.log('Audio file received:', {
+      name: audioFile.name,
+      type: audioFile.type,
+      size: audioFile.size
+    });
 
     // Convert the file to an array buffer
     const arrayBuffer = await audioFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    console.log('Preparing OpenAI API request');
 
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
@@ -54,6 +59,8 @@ serve(async (req) => {
       body: openAIFormData,
     });
 
+    console.log('OpenAI API response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', errorText);
@@ -61,7 +68,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Received transcription:', data);
+    console.log('Transcription successful:', data);
 
     return new Response(JSON.stringify({ text: data.text }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -71,7 +78,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.stack 
+        details: error.stack,
+        timestamp: new Date().toISOString()
       }),
       { 
         status: 500, 
