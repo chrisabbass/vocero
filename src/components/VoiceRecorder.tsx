@@ -9,6 +9,7 @@ import PostActions from './PostActions';
 import SavedPosts from './SavedPosts';
 import Header from './Header';
 import ToneSelector from './ToneSelector';
+import PaywallDialog from './PaywallDialog';
 
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
 
@@ -17,6 +18,11 @@ const VoiceRecorder = () => {
   const [selectedVariation, setSelectedVariation] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [personality, setPersonality] = useState<Personality>('friendly');
+  const [recordingCount, setRecordingCount] = useState(() => {
+    const stored = localStorage.getItem('recordingCount');
+    return stored ? parseInt(stored, 10) : 0;
+  });
+  const [showPaywall, setShowPaywall] = useState(false);
   const { toast } = useToast();
   const { savedPosts, savePost, deletePost } = useSavedPosts();
   const { 
@@ -59,6 +65,16 @@ const VoiceRecorder = () => {
       console.log('Generated variations:', newVariations);
       setVariations(newVariations);
       setSelectedVariation(newVariations[0]);
+
+      // Increment recording count after successful generation
+      const newCount = recordingCount + 1;
+      setRecordingCount(newCount);
+      localStorage.setItem('recordingCount', newCount.toString());
+
+      // Show paywall if limit reached
+      if (newCount >= 3) {
+        setShowPaywall(true);
+      }
     } catch (error) {
       console.error('Error generating variations:', error);
       toast({
@@ -69,6 +85,14 @@ const VoiceRecorder = () => {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleStartRecording = async () => {
+    if (recordingCount >= 3) {
+      setShowPaywall(true);
+      return;
+    }
+    startRecording();
   };
 
   const handleStopRecording = () => {
@@ -113,7 +137,7 @@ const VoiceRecorder = () => {
 
       <RecordButton
         isRecording={isRecording}
-        onStartRecording={startRecording}
+        onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
       />
 
@@ -136,6 +160,11 @@ const VoiceRecorder = () => {
       )}
 
       <SavedPosts posts={savedPosts} onDelete={deletePost} />
+
+      <PaywallDialog 
+        isOpen={showPaywall} 
+        onClose={() => setShowPaywall(false)} 
+      />
     </div>
   );
 };
