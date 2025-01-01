@@ -48,7 +48,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [{
           role: "system",
           content: getPersonalityPrompt(personality)
@@ -62,23 +62,27 @@ export const generateVariations = async (text: string, personality: string = 'fr
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
+      console.error('OpenAI API error response:', errorData);
       throw new Error(errorData.error?.message || 'OpenAI API request failed');
     }
 
     const responseData = await response.json() as OpenAIResponse;
-    console.log('OpenAI response:', responseData);
+    console.log('OpenAI API response:', responseData);
     
     if (!responseData.choices?.[0]?.message?.content) {
+      console.error('Invalid response format from OpenAI:', responseData);
       throw new Error('Invalid response format from OpenAI');
     }
     
-    return responseData.choices[0].message.content
+    const variations = responseData.choices[0].message.content
       .split('\n')
       .filter((v: string) => v.trim().length > 0)
       .slice(0, 3);
+    
+    console.log('Generated variations:', variations);
+    return variations;
   } catch (error) {
     console.error('Error in OpenAI request:', error);
-    throw new Error(`OpenAI API error: ${error.message}`);
+    throw error;
   }
 };
