@@ -70,9 +70,18 @@ const App = () => {
   useEffect(() => {
     const checkSupabaseConnection = async () => {
       try {
-        const { data, error } = await supabase.from('profiles').select('*').limit(1);
-        console.log('Supabase connection test:', error ? 'Failed' : 'Successful');
-        if (error) console.error('Supabase connection error:', error);
+        // First check if we have an authenticated session
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Auth session check:', session ? 'Active session' : 'No session');
+        
+        if (session) {
+          // Only try to access profiles if we have an authenticated session
+          const { data, error } = await supabase.from('profiles').select('*').limit(1);
+          console.log('Supabase connection test:', error ? 'Failed' : 'Successful');
+          if (error) console.error('Supabase connection error:', error);
+        } else {
+          console.log('Skipping profiles check - no authenticated session');
+        }
       } catch (err) {
         console.error('Error testing Supabase connection:', err);
       }
