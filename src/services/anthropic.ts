@@ -28,11 +28,6 @@ export const generateVariations = async (text: string, personality: string = 'fr
       throw new Error('Anthropic API key not found in Supabase secrets. Please set it up.');
     }
 
-    if (typeof apiKey !== 'string' || !apiKey.startsWith('sk-')) {
-      console.error('Invalid API key format');
-      throw new Error('Invalid Anthropic API key format. Please make sure you\'ve entered a valid key starting with "sk-"');
-    }
-
     console.log('API key retrieved successfully');
 
     const systemPrompt = getPersonalityPrompt(personality);
