@@ -7,9 +7,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 interface PostActionsProps {
   onSave: () => void;
   textToShare: string;
+  isSavedPost?: boolean;
 }
 
-const PostActions = ({ onSave, textToShare }: PostActionsProps) => {
+const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsProps) => {
   const [isGeneratingUrl, setIsGeneratingUrl] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -78,15 +79,17 @@ const PostActions = ({ onSave, textToShare }: PostActionsProps) => {
         Copy
       </Button>
       
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onSave}
-        className="flex items-center gap-2"
-      >
-        <Save className="w-4 h-4" />
-        Save
-      </Button>
+      {!isSavedPost && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSave}
+          className="flex items-center gap-2"
+        >
+          <Save className="w-4 h-4" />
+          Save
+        </Button>
+      )}
 
       <Button
         variant="default"
