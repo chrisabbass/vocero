@@ -150,7 +150,6 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
         variations={variations}
         selectedVariation={selectedVariation}
         onVariationChange={setSelectedVariation}
-        onTranscriptChange={setTranscript}
         isGenerating={isGenerating}
         onSavePost={onSavePost}
         savedPosts={savedPosts}
