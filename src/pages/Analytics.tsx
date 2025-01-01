@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, BarChart3 } from 'lucide-react';
 import TimeRangeSelector from '@/components/analytics/TimeRangeSelector';
 import PerformanceChart from '@/components/analytics/PerformanceChart';
 import PostsList from '@/components/analytics/PostsList';
@@ -146,7 +146,10 @@ const Analytics = () => {
     <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-purple-600" />
+            Analytics Dashboard
+          </h1>
           <TimeRangeSelector value={timeRange} onValueChange={setTimeRange} />
         </div>
 
