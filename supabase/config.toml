@@ -1,4 +1,7 @@
 project_id = "nmjmurbaaevmakymqiyc"
 
+[functions.whisper-transcribe]
+verify_jwt = false
+
 [functions.anthropic-proxy]
 verify_jwt = false
