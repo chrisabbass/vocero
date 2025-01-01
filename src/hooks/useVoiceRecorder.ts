@@ -10,11 +10,12 @@ export const useVoiceRecorder = () => {
 
   // Function to get supported MIME type
   const getSupportedMimeType = () => {
+    // Only use formats that are supported by both browser and OpenAI
     const types = [
-      'audio/webm;codecs=opus',
-      'audio/ogg;codecs=opus',
-      'audio/wav',
-      'audio/mp4'
+      'audio/webm',  // This will be converted to a supported format
+      'audio/mp4',
+      'audio/ogg',
+      'audio/wav'
     ];
 
     for (const type of types) {
@@ -66,7 +67,9 @@ export const useVoiceRecorder = () => {
         
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob, `audio.${mimeType.split('/')[1].split(';')[0]}`);
+          // Ensure we send with a proper extension that matches the MIME type
+          const extension = mimeType.split('/')[1];
+          formData.append('audio', audioBlob, `recording.${extension}`);
 
           console.log('Sending audio to Whisper API...');
           const response = await fetch('https://nmjmurbaaevmakymqiyc.supabase.co/functions/v1/whisper-transcribe', {

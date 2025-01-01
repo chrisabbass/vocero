@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -13,11 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    console.log('Checking OpenAI API key...');
-
     if (!openAIApiKey) {
-      console.error('OpenAI API key not found in environment variables');
       throw new Error('OpenAI API key not configured');
     }
 
@@ -53,6 +51,8 @@ serve(async (req) => {
     openAIFormData.append('response_format', 'json');
 
     console.log('Sending request to OpenAI Whisper API');
+    console.log('Audio file name:', audioFile.name);
+    console.log('Audio file type:', audioFile.type);
 
     // Send request to OpenAI's Whisper API with timeout
     const controller = new AbortController();
