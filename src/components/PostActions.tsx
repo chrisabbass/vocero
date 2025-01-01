@@ -21,7 +21,7 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const handleShare = async (platform?: 'twitter' | 'linkedin') => {
+  const handleShare = async (platform: 'twitter' | 'linkedin') => {
     console.log('Sharing post with text:', textToShare, 'to platform:', platform);
     if (!textToShare || textToShare.trim() === '') {
       console.error('No content to share');
@@ -44,21 +44,11 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
         const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(textToShare)}`;
         window.open(linkedinUrl, '_blank');
         console.log('Opened LinkedIn share window');
-      } else if (isMobile && navigator.share) {
-        console.log('Using native share on mobile');
-        await navigator.share({
-          text: textToShare,
-        });
-        console.log('Successfully shared via native share');
-      } else {
-        console.log('Using clipboard share');
-        await navigator.clipboard.writeText(textToShare);
-        console.log('Successfully copied to clipboard');
       }
       
       toast({
         title: "Success",
-        description: platform ? `Opening ${platform} to share` : "Content copied to clipboard",
+        description: `Opening ${platform} to share`,
       });
     } catch (error) {
       console.error('Error sharing:', error);
