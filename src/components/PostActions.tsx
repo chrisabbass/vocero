@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, Save } from 'lucide-react';
+import { Share2, Save, Copy } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface PostActionsProps {
   textToShare: string;
@@ -39,6 +45,23 @@ const PostActions = ({ textToShare, onSave, isSavedPost }: PostActionsProps) => 
     }
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(textToShare);
+      toast({
+        title: "Success",
+        description: "Text copied to clipboard",
+      });
+    } catch (error) {
+      console.error('Error copying text:', error);
+      toast({
+        title: "Error",
+        description: "Failed to copy text. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex justify-end space-x-2 mt-2">
       {!isSavedPost && (
@@ -53,27 +76,36 @@ const PostActions = ({ textToShare, onSave, isSavedPost }: PostActionsProps) => 
         </Button>
       )}
       
-      <div className="flex space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('twitter')}
-          className="flex items-center gap-2"
-        >
-          <Share2 className="h-4 w-4" />
-          Twitter
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('linkedin')}
-          className="flex items-center gap-2"
-        >
-          <Share2 className="h-4 w-4" />
-          LinkedIn
-        </Button>
-      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleCopy}
+        className="flex items-center gap-2"
+      >
+        <Copy className="h-4 w-4" />
+        Copy
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Share2 className="h-4 w-4" />
+            Share
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => handleShare('twitter')}>
+            Twitter
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShare('linkedin')}>
+            LinkedIn
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
