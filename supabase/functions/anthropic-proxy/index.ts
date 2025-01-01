@@ -9,6 +9,13 @@ const corsHeaders = {
 // Helper function to create variations with retry logic
 async function createVariations(messages: any[], systemPrompt: string) {
   const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+  if (!ANTHROPIC_API_KEY) {
+    console.error('Missing ANTHROPIC_API_KEY');
+    throw new Error('Configuration error: Missing API key');
+  }
+  
+  console.log('Creating variations with system prompt:', systemPrompt);
+  console.log('Messages:', JSON.stringify(messages));
   
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -32,7 +39,9 @@ async function createVariations(messages: any[], systemPrompt: string) {
     throw new Error(`Anthropic API error: ${JSON.stringify(error)}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('Successfully received response:', data);
+  return data;
 }
 
 // Exponential backoff retry logic with jitter
@@ -41,6 +50,10 @@ async function retryWithBackoff(fn: () => Promise<any>, maxRetries = 3) {
     try {
       return await fn();
     } catch (error) {
+      if (i === maxRetries - 1) {
+        throw error; // Last attempt failed, propagate error
+      }
+      
       if (error.message?.includes('rate_limit_error')) {
         const baseDelay = Math.pow(2, i) * 1000; // Base delay: 1s, 2s, 4s
         const jitter = Math.random() * 1000; // Add up to 1s of random jitter
@@ -96,6 +109,8 @@ serve(async (req) => {
       errorMessage += 'The service is experiencing high demand. Please try again in a few moments.';
     } else if (error.message?.includes('Input text too long')) {
       errorMessage += 'Please record a shorter message (maximum 30 seconds recommended).';
+    } else if (error.message?.includes('Configuration error')) {
+      errorMessage += 'There is a configuration issue. Please contact support.';
     } else {
       errorMessage += 'An unexpected error occurred. Please try again.';
     }
