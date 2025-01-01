@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Square, Share2, Loader2, Twitter, Linkedin } from 'lucide-react';
+import { Mic, Square, Share2, Loader2, Twitter, Linkedin, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import SavedPosts from './SavedPosts';
+import { useSavedPosts } from '@/hooks/useSavedPosts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +22,7 @@ const VoiceRecorder = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const { toast } = useToast();
+  const { savedPosts, savePost, deletePost } = useSavedPosts();
 
   const generateVariations = async (text: string) => {
     setIsGenerating(true);
@@ -110,6 +113,32 @@ const VoiceRecorder = () => {
     }
   };
 
+  const handleSavePost = () => {
+    const textToSave = selectedVariation || transcript;
+    if (!textToSave) {
+      toast({
+        title: "Error",
+        description: "No content to save",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const saved = savePost(textToSave);
+    if (saved) {
+      toast({
+        title: "Success",
+        description: "Post saved successfully",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Maximum number of saved posts reached (10)",
+        variant: "destructive",
+      });
+    }
+  };
+
   const shareToTwitter = () => {
     const textToShare = selectedVariation || transcript;
     const encodedText = encodeURIComponent(textToShare);
@@ -193,30 +222,42 @@ const VoiceRecorder = () => {
                 </RadioGroup>
               </div>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share Post
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuItem onClick={shareToTwitter}>
-                    <Twitter className="mr-2 h-4 w-4" />
-                    Share on Twitter
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={shareToLinkedIn}>
-                    <Linkedin className="mr-2 h-4 w-4" />
-                    Share on LinkedIn
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex gap-4">
+                <Button
+                  onClick={handleSavePost}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Post
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share Post
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuItem onClick={shareToTwitter}>
+                      <Twitter className="mr-2 h-4 w-4" />
+                      Share on Twitter
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={shareToLinkedIn}>
+                      <Linkedin className="mr-2 h-4 w-4" />
+                      Share on LinkedIn
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </>
           )}
         </div>
       )}
+
+      <SavedPosts posts={savedPosts} onDelete={deletePost} />
     </div>
   );
 };
