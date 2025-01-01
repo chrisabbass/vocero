@@ -3,7 +3,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { generateVariations } from '@/services/anthropic';
 import { supabase } from '@/integrations/supabase/client';
-import { usePostManagement } from '@/hooks/usePostManagement';
 import { useVoiceRecorderInit } from '@/hooks/useVoiceRecorderInit';
 import RecordButton from './RecordButton';
 import Header from './Header';
@@ -11,10 +10,17 @@ import ToneSelector from './ToneSelector';
 import PaywallDialog from './PaywallDialog';
 import MainContent from './MainContent';
 import LoadingSpinner from './LoadingSpinner';
+import type { SavedPost } from '@/types/post';
 
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
 
-const VoiceRecorder = () => {
+interface VoiceRecorderProps {
+  savedPosts: SavedPost[];
+  onSavePost: (content: string) => boolean;
+  onDeletePost: (id: string) => void;
+}
+
+const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderProps) => {
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [personality, setPersonality] = React.useState<Personality>('friendly');
   const { toast } = useToast();
@@ -32,10 +38,17 @@ const VoiceRecorder = () => {
     setVariations,
     selectedVariation,
     setSelectedVariation,
-    savedPosts,
-    handleSavePost,
-    deletePost 
-  } = usePostManagement();
+  } = React.useState<{
+    variations: string[];
+    setVariations: React.Dispatch<React.SetStateAction<string[]>>;
+    selectedVariation: string;
+    setSelectedVariation: React.Dispatch<React.SetStateAction<string>>;
+  }>({
+    variations: [],
+    setVariations: React.useState<string[]>([])[1],
+    selectedVariation: '',
+    setSelectedVariation: React.useState<string>('')[1],
+  });
 
   const { 
     isRecording, 
@@ -44,6 +57,8 @@ const VoiceRecorder = () => {
     stopRecording,
     setTranscript 
   } = useVoiceRecorder();
+
+  console.log('VoiceRecorder savedPosts:', savedPosts); // Debug log
 
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting state');
@@ -144,19 +159,17 @@ const VoiceRecorder = () => {
         onStopRecording={stopRecording}
       />
 
-      {(transcript || variations.length > 0) && (
-        <MainContent
-          transcript={transcript}
-          variations={variations}
-          selectedVariation={selectedVariation}
-          onVariationChange={setSelectedVariation}
-          onTranscriptChange={setTranscript}
-          isGenerating={isGenerating}
-          onSavePost={handleSavePost}
-          savedPosts={savedPosts}
-          onDeletePost={deletePost}
-        />
-      )}
+      <MainContent
+        transcript={transcript}
+        variations={variations}
+        selectedVariation={selectedVariation}
+        onVariationChange={setSelectedVariation}
+        onTranscriptChange={setTranscript}
+        isGenerating={isGenerating}
+        onSavePost={onSavePost}
+        savedPosts={savedPosts}
+        onDeletePost={onDeletePost}
+      />
 
       <PaywallDialog 
         isOpen={showPaywall} 
