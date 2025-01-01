@@ -19,7 +19,7 @@ export const useVoiceRecorder = () => {
       mediaRecorder.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunks.current.push(event.data);
-          console.log('Audio chunk received:', event.data);
+          console.log('Audio chunk received, size:', event.data.size);
         }
       };
 
@@ -27,11 +27,32 @@ export const useVoiceRecorder = () => {
         const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
         console.log('Recording completed, blob size:', audioBlob.size);
         
-        // For now, we'll use a simulated response since we don't have a speech-to-text service
-        // In a production environment, you would send this blob to a speech-to-text service
-        const simulatedTranscript = "This is what you just said. In a real implementation, this would be the actual transcribed text from your voice recording.";
-        console.log('Setting transcript:', simulatedTranscript);
-        setTranscript(simulatedTranscript);
+        try {
+          // Create a FormData object to send the audio file
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'recording.wav');
+
+          // Send the audio file to Whisper API through our Supabase Edge Function
+          const response = await fetch('https://nmjmurbaaevmakymqiyc.supabase.co/functions/v1/whisper-transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to transcribe audio');
+          }
+
+          const data = await response.json();
+          console.log('Transcription received:', data);
+          setTranscript(data.text);
+        } catch (error) {
+          console.error('Transcription error:', error);
+          toast({
+            title: "Error",
+            description: "Failed to transcribe audio. Please try again.",
+            variant: "destructive",
+          });
+        }
       };
 
       mediaRecorder.current.start();
