@@ -5,12 +5,11 @@ import { useSavedPosts } from '@/hooks/useSavedPosts';
 import { generateVariations } from '@/services/anthropic';
 import { supabase } from '@/integrations/supabase/client';
 import RecordButton from './RecordButton';
-import VariationsSection from './VariationsSection';
-import PostActions from './PostActions';
-import SavedPosts from './SavedPosts';
 import Header from './Header';
 import ToneSelector from './ToneSelector';
 import PaywallDialog from './PaywallDialog';
+import MainContent from './MainContent';
+import LoadingSpinner from './LoadingSpinner';
 
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
 
@@ -21,6 +20,7 @@ const VoiceRecorder = () => {
   const [personality, setPersonality] = useState<Personality>('friendly');
   const [recordingCount, setRecordingCount] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { savedPosts, savePost, deletePost } = useSavedPosts();
   const { 
@@ -32,29 +32,45 @@ const VoiceRecorder = () => {
   } = useVoiceRecorder();
 
   useEffect(() => {
-    const fetchRecordingCount = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+    const initializeApp = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('recording_count')
+            .eq('id', session.user.id)
+            .single();
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('recording_count')
-        .eq('id', session.user.id)
-        .single();
+          if (error) {
+            console.error('Error fetching recording count:', error);
+            toast({
+              title: "Error",
+              description: "Failed to load user data. Please try refreshing the page.",
+              variant: "destructive",
+            });
+            return;
+          }
 
-      if (error) {
-        console.error('Error fetching recording count:', error);
-        return;
-      }
-
-      setRecordingCount(data?.recording_count || 0);
-      if ((data?.recording_count || 0) >= 3) {
-        setShowPaywall(true);
+          setRecordingCount(data?.recording_count || 0);
+          if ((data?.recording_count || 0) >= 3) {
+            setShowPaywall(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize the application. Please try refreshing the page.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchRecordingCount();
-  }, []);
+    initializeApp();
+  }, [toast]);
 
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting state');
@@ -89,7 +105,6 @@ const VoiceRecorder = () => {
       setVariations(newVariations);
       setSelectedVariation(newVariations[0]);
 
-      // Update recording count in the database
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
@@ -110,8 +125,6 @@ const VoiceRecorder = () => {
       }
 
       setRecordingCount(newCount);
-
-      // Show paywall if limit reached
       if (newCount >= 3) {
         setShowPaywall(true);
       }
@@ -135,36 +148,13 @@ const VoiceRecorder = () => {
     startRecording();
   };
 
-  const handleStopRecording = () => {
-    console.log('Stopping recording...');
-    stopRecording();
-  };
-
-  const handleSavePost = () => {
-    const textToSave = selectedVariation || transcript;
-    if (!textToSave) {
-      toast({
-        title: "Error",
-        description: "No content to save",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const saved = savePost(textToSave);
-    if (saved) {
-      toast({
-        title: "Success",
-        description: "Post saved successfully",
-      });
-    } else {
-      toast({
-        title: "Error",
-        description: "Maximum number of saved posts reached (10)",
-        variant: "destructive",
-      });
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="max-w-md mx-auto p-6">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-6">
@@ -178,28 +168,46 @@ const VoiceRecorder = () => {
       <RecordButton
         isRecording={isRecording}
         onStartRecording={handleStartRecording}
-        onStopRecording={handleStopRecording}
+        onStopRecording={stopRecording}
       />
 
       {(transcript || variations.length > 0) && (
-        <div className="space-y-4">
-          <VariationsSection
-            variations={variations}
-            selectedVariation={selectedVariation}
-            onVariationChange={setSelectedVariation}
-            transcript={transcript}
-            onTranscriptChange={setTranscript}
-            isGenerating={isGenerating}
-          />
-          
-          <PostActions
-            onSave={handleSavePost}
-            textToShare={selectedVariation || transcript}
-          />
-        </div>
-      )}
+        <MainContent
+          transcript={transcript}
+          variations={variations}
+          selectedVariation={selectedVariation}
+          onVariationChange={setSelectedVariation}
+          onTranscriptChange={setTranscript}
+          isGenerating={isGenerating}
+          onSavePost={() => {
+            const textToSave = selectedVariation || transcript;
+            if (!textToSave) {
+              toast({
+                title: "Error",
+                description: "No content to save",
+                variant: "destructive",
+              });
+              return;
+            }
 
-      <SavedPosts posts={savedPosts} onDelete={deletePost} />
+            const saved = savePost(textToSave);
+            if (saved) {
+              toast({
+                title: "Success",
+                description: "Post saved successfully",
+              });
+            } else {
+              toast({
+                title: "Error",
+                description: "Maximum number of saved posts reached (10)",
+                variant: "destructive",
+              });
+            }
+          }}
+          savedPosts={savedPosts}
+          onDeletePost={deletePost}
+        />
+      )}
 
       <PaywallDialog 
         isOpen={showPaywall} 
