@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
-import PostMetrics from '@/components/PostMetrics';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Line, LineChart, XAxis, YAxis } from "recharts";
+import TimeRangeSelector from '@/components/analytics/TimeRangeSelector';
+import PerformanceChart from '@/components/analytics/PerformanceChart';
+import PostsList from '@/components/analytics/PostsList';
+import TopPosts from '@/components/analytics/TopPosts';
 
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('week');
@@ -71,7 +61,6 @@ const Analytics = () => {
         throw error;
       }
 
-      // Get unique posts
       const uniquePosts = Array.from(new Set(data.map(m => m.post_content)));
       console.log('Unique shared posts:', uniquePosts);
       return uniquePosts;
@@ -93,7 +82,6 @@ const Analytics = () => {
         throw error;
       }
 
-      // Get unique posts with their total impressions
       const postsMap = new Map();
       data.forEach(post => {
         if (!postsMap.has(post.post_content)) {
@@ -111,7 +99,6 @@ const Analytics = () => {
         }
       });
 
-      // Convert to array and get top 5
       const topPosts = Array.from(postsMap.values())
         .sort((a, b) => b.totalImpressions - a.totalImpressions)
         .slice(0, 5);
@@ -160,72 +147,12 @@ const Analytics = () => {
       <div className="container mx-auto py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Last Week</SelectItem>
-              <SelectItem value="month">Last Month</SelectItem>
-              <SelectItem value="quarter">Last Quarter</SelectItem>
-            </SelectContent>
-          </Select>
+          <TimeRangeSelector value={timeRange} onValueChange={setTimeRange} />
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">Performance Over Time</h2>
-          <div className="bg-white rounded-lg shadow p-4">
-            <ChartContainer className="h-[400px]" config={{}}>
-              <LineChart data={chartData}>
-                <XAxis dataKey="date" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line type="monotone" dataKey="impressions" stroke="#2563eb" />
-                <Line type="monotone" dataKey="likes" stroke="#16a34a" />
-                <Line type="monotone" dataKey="comments" stroke="#d97706" />
-                <Line type="monotone" dataKey="reshares" stroke="#dc2626" />
-              </LineChart>
-            </ChartContainer>
-          </div>
-        </div>
-
-        <h2 className="text-lg font-semibold mb-4">Individual Post Performance</h2>
-        {sharedPosts && sharedPosts.length > 0 ? (
-          <div className="space-y-8">
-            {sharedPosts.map((postContent) => (
-              <div key={postContent} className="bg-white rounded-lg shadow p-6">
-                <p className="text-sm mb-4">{postContent}</p>
-                <PostMetrics postContent={postContent} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            No shared posts found. Share some posts on Twitter or LinkedIn to see their performance here.
-          </div>
-        )}
-
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Top Performing Posts</h2>
-          <div className="bg-white rounded-lg shadow p-6">
-            {topPosts && topPosts.length > 0 ? (
-              <ol className="list-decimal list-inside space-y-4">
-                {topPosts.map((post, index) => (
-                  <li key={index} className="text-sm">
-                    <span className="font-medium">
-                      {post.content} 
-                    </span>
-                    <span className="text-gray-500 ml-2">
-                      ({post.totalImpressions.toLocaleString()} impressions on {post.platform})
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="text-gray-500 text-center">No posts to display yet.</p>
-            )}
-          </div>
-        </div>
+        <PerformanceChart data={chartData} />
+        <PostsList posts={sharedPosts || []} />
+        <TopPosts posts={topPosts || []} />
       </div>
     </div>
   );
