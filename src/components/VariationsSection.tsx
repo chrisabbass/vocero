@@ -34,7 +34,7 @@ const VariationsSection = ({
     <div className="space-y-4">
       {variations.length > 0 ? (
         <>
-          <h2 className="font-semibold text-lg text-center mx-auto">Pick your post</h2>
+          <h2 className="font-semibold text-xl text-center mx-auto mb-6 text-gray-800">Pick your post</h2>
           <RadioGroup 
             value={selectedVariation} 
             onValueChange={onVariationChange}
