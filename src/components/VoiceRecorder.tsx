@@ -3,6 +3,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useSavedPosts } from '@/hooks/useSavedPosts';
 import { generateVariations } from '@/services/openai';
+import { Pen } from 'lucide-react';
 import RecordButton from './RecordButton';
 import VariationsSection from './VariationsSection';
 import PostActions from './PostActions';
@@ -70,7 +71,8 @@ const VoiceRecorder = () => {
   return (
     <div className="max-w-md mx-auto p-6 space-y-6">
       <div className="text-center">
-        <h1 className="text-4xl font-bold italic mb-2" style={{ fontFamily: 'Inter', letterSpacing: '-0.025em' }}>
+        <h1 className="text-4xl font-bold italic mb-2 flex items-center justify-center gap-2" style={{ fontFamily: 'Inter', letterSpacing: '-0.025em' }}>
+          <Pen className="w-8 h-8 text-purple-600" />
           Postful
         </h1>
         <p className="text-slate-600 mb-6">Record your voice to create a social post</p>
