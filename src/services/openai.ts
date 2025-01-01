@@ -41,7 +41,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       messages: [{
         role: "system",
         content: getPersonalityPrompt(personality)
