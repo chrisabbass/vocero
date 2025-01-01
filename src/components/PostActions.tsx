@@ -3,6 +3,12 @@ import { Share2, Save, Copy, Twitter, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PostActionsProps {
   onSave: () => void;
@@ -121,36 +127,35 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
         </Button>
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => handleShare('twitter')}
-        className="flex items-center gap-2"
-      >
-        <Twitter className="w-4 h-4" />
-        Twitter
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => handleShare('linkedin')}
-        className="flex items-center gap-2"
-      >
-        <Linkedin className="w-4 h-4" />
-        LinkedIn
-      </Button>
-
-      <Button
-        variant="default"
-        size="sm"
-        onClick={() => handleShare()}
-        disabled={isGeneratingUrl}
-        className="flex items-center gap-2"
-      >
-        <Share2 className="w-4 h-4" />
-        {isGeneratingUrl ? 'Sharing...' : 'Share'}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="default"
+            size="sm"
+            disabled={isGeneratingUrl}
+            className="flex items-center gap-2"
+          >
+            <Share2 className="w-4 h-4" />
+            {isGeneratingUrl ? 'Sharing...' : 'Share'}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => handleShare('twitter')} className="gap-2">
+            <Twitter className="w-4 h-4" />
+            Share on Twitter
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShare('linkedin')} className="gap-2">
+            <Linkedin className="w-4 h-4" />
+            Share on LinkedIn
+          </DropdownMenuItem>
+          {isMobile && navigator.share && (
+            <DropdownMenuItem onClick={() => handleShare()} className="gap-2">
+              <Share2 className="w-4 h-4" />
+              Share via...
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
