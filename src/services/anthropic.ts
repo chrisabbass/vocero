@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getAnthropicApiKey } from "./anthropicConfig";
 import { getPersonalityPrompt } from "./personalityPrompts";
 
 export const generateVariations = async (text: string, personality: string = 'friendly'): Promise<string[]> => {
