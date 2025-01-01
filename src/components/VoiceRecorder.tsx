@@ -37,12 +37,13 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
   } = useVoiceRecorderInit();
 
   const handleLogoClick = () => {
-    console.log('Logo clicked - resetting state');
+    console.log('Logo clicked - resetting all states');
     setVariations([]);
     setSelectedVariation('');
     setIsGenerating(false);
     setTranscript('');
     setProcessingTranscript('');
+    setPersonality('friendly'); // Reset personality to default
   };
 
   const handleTranscriptGenerated = async (newTranscript: string) => {
