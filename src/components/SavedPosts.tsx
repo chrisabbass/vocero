@@ -73,8 +73,8 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
                       </Button>
                     </div>
                     <PostActions
-                      onSave={() => {}}
                       textToShare={post.content}
+                      onSave={() => {}}
                       isSavedPost={true}
                     />
                   </div>

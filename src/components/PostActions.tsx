@@ -1,103 +1,79 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Share2, Twitter, Linkedin } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Share2, Save } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
-interface PostActionsProps {
+export interface PostActionsProps {
   textToShare: string;
-  onSave?: () => void;
-  onDelete?: () => void;
+  onSave: () => void;
+  isSavedPost: boolean;
 }
 
-const PostActions = ({ textToShare, onSave, onDelete }: PostActionsProps) => {
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
-
+const PostActions = ({ textToShare, onSave, isSavedPost }: PostActionsProps) => {
   const handleShare = async (platform: 'twitter' | 'linkedin') => {
-    console.log('Sharing post with text:', textToShare, 'to platform:', platform);
-    if (!textToShare || textToShare.trim() === '') {
-      console.error('No content to share');
-      toast({
-        title: "Error",
-        description: "No content to share",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      if (platform === 'twitter') {
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(textToShare)}`;
-        window.open(twitterUrl, '_blank');
-        console.log('Opened Twitter share window');
-      } else if (platform === 'linkedin') {
-        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(textToShare)}`;
-        window.open(linkedinUrl, '_blank');
-        console.log('Opened LinkedIn share window');
+      let shareUrl = '';
+      const encodedText = encodeURIComponent(textToShare);
+      
+      switch (platform) {
+        case 'twitter':
+          shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}`;
+          break;
+        case 'linkedin':
+          shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodedText}`;
+          break;
       }
       
+      window.open(shareUrl, '_blank', 'width=600,height=400');
       toast({
-        title: "Success",
-        description: `Opening ${platform} to share`,
+        title: "Share initiated",
+        description: `Opening ${platform} share dialog...`,
       });
     } catch (error) {
       console.error('Error sharing:', error);
       toast({
         title: "Error",
-        description: "Failed to share content",
+        description: "Failed to share the post. Please try again.",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => handleShare('twitter')}>
-            <Twitter className="mr-2 h-4 w-4" />
-            Twitter
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleShare('linkedin')}>
-            <Linkedin className="mr-2 h-4 w-4" />
-            LinkedIn
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {onSave && (
+    <div className="flex justify-end space-x-2 mt-2">
+      {!isSavedPost && (
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={onSave}
-          className="flex-shrink-0"
+          className="flex items-center gap-2"
         >
+          <Save className="h-4 w-4" />
           Save
         </Button>
       )}
-
-      {onDelete && (
+      
+      <div className="flex space-x-2">
         <Button
           variant="outline"
-          size="icon"
-          onClick={onDelete}
-          className="flex-shrink-0"
+          size="sm"
+          onClick={() => handleShare('twitter')}
+          className="flex items-center gap-2"
         >
-          Delete
+          <Share2 className="h-4 w-4" />
+          Twitter
         </Button>
-      )}
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare('linkedin')}
+          className="flex items-center gap-2"
+        >
+          <Share2 className="h-4 w-4" />
+          LinkedIn
+        </Button>
+      </div>
     </div>
   );
 };
