@@ -29,62 +29,47 @@ async function createVariations(messages: any[], systemPrompt: string) {
   console.log('Creating variations with system prompt:', systemPrompt);
   console.log('Messages:', JSON.stringify(messages));
   
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: "claude-3-sonnet-20240229",
-      max_tokens: 512,
-      system: systemPrompt,
-      messages: messages.filter((msg: any) => msg.role !== 'system'),
-      temperature: 0.7
-    })
-  });
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: "claude-3-sonnet-20240229",
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: messages.filter((msg: any) => msg.role !== 'system'),
+        temperature: 0.7
+      })
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    console.error('Anthropic API error:', error);
-    throw new Error(`Anthropic API error: ${JSON.stringify(error)}`);
-  }
-
-  const data = await response.json();
-  console.log('Successfully received response:', data);
-  return data;
-}
-
-// Exponential backoff retry logic with jitter
-async function retryWithBackoff(fn: () => Promise<any>, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i === maxRetries - 1) {
-        throw error; // Last attempt failed, propagate error
-      }
-      
-      if (error.message?.includes('rate_limit_error')) {
-        const baseDelay = Math.pow(2, i) * 1000; // Base delay: 1s, 2s, 4s
-        const jitter = Math.random() * 1000; // Add up to 1s of random jitter
-        const delay = baseDelay + jitter;
-        
-        console.log(`Rate limited, retrying in ${Math.round(delay)}ms... (Attempt ${i + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      throw error;
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Anthropic API error:', error);
+      throw new Error(`Anthropic API error: ${JSON.stringify(error)}`);
     }
+
+    const data = await response.json();
+    console.log('Successfully received response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in createVariations:', error);
+    throw error;
   }
-  throw new Error('Max retries exceeded');
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: { 
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      }
+    });
   }
 
   try {
@@ -94,22 +79,26 @@ serve(async (req) => {
       headers: Object.fromEntries(req.headers.entries())
     });
 
-    // Verify environment before processing request
-    try {
-      verifyEnvironment();
-    } catch (error) {
-      console.error('Environment verification failed:', error);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Server configuration error. Please contact support.' 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      );
+    // Verify request method
+    if (req.method !== 'POST') {
+      throw new Error('Method not allowed');
     }
 
-    const { messages, systemPrompt } = await req.json();
+    // Parse request body
+    let body;
+    try {
+      body = await req.json();
+    } catch (error) {
+      console.error('Error parsing request body:', error);
+      throw new Error('Invalid request body');
+    }
+
+    const { messages, systemPrompt } = body;
+    
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('Invalid messages format');
+    }
+
     console.log('Processing request with message count:', messages.length);
     
     // Estimate token count (rough estimation)
@@ -121,8 +110,8 @@ serve(async (req) => {
       throw new Error('Input text too long');
     }
 
-    // Attempt to create variations with retry logic
-    const response = await retryWithBackoff(() => createVariations(messages, systemPrompt));
+    // Create variations with retry logic
+    const response = await createVariations(messages, systemPrompt);
     console.log('Successfully received response from Anthropic');
 
     return new Response(JSON.stringify(response), {
