@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import type { SavedPost } from '@/types/post';
 import PostActions from './PostActions';
-import PostMetrics from './PostMetrics';
 import {
   Carousel,
   CarouselContent,
@@ -63,7 +62,6 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <PostMetrics postContent={post.content} />
                     <PostActions
                       onSave={() => {}}
                       textToShare={post.content}
