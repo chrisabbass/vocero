@@ -9,7 +9,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log('Anthropic proxy function called');
   
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,13 +26,13 @@ serve(async (req) => {
     let systemPrompt = 'You are a professional content writer creating engaging social media posts.';
     switch (personality) {
       case 'direct':
-        systemPrompt = 'You are a professional content writer focused on creating clear, concise, and straightforward social media posts. Keep the tone direct and business-like.';
+        systemPrompt = 'You are a professional content writer focused on creating clear, concise, and straightforward social media posts. Keep the tone direct and business-like. Always maintain the same structure across all variations.';
         break;
       case 'friendly':
-        systemPrompt = 'You are a warm and approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone.';
+        systemPrompt = 'You are a warm and approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone. Always maintain the same structure across all variations.';
         break;
       case 'enthusiastic':
-        systemPrompt = 'You are an energetic content writer creating exciting and dynamic social media posts. Use an upbeat and enthusiastic tone with appropriate exclamation marks!';
+        systemPrompt = 'You are an energetic content writer creating exciting and dynamic social media posts. Use an upbeat and enthusiastic tone with appropriate exclamation marks! Always maintain the same structure across all variations.';
         break;
     }
 
@@ -53,7 +52,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${transcript}`
+            content: `Create exactly 3 variations of this text for social media, maintaining the selected tone. Each variation should be a complete post that includes all points. Number each variation (1., 2., 3.). If the input contains multiple points, keep them all together in each variation: ${transcript}`
           }
         ],
         temperature: 0.7
@@ -72,11 +71,20 @@ serve(async (req) => {
     // Extract variations from the response
     const content = data.content[0].text;
     const variations = content
-      .split('\n')
-      .filter((line: string) => /^\d+\./.test(line.trim()))
-      .map((v: string) => v.replace(/^\d+\.\s*/, '').trim());
+      .split(/\d+\.\s+/)  // Split on numbered variations
+      .filter(Boolean)    // Remove empty strings
+      .slice(0, 3)       // Ensure exactly 3 variations
+      .map(v => v.trim());
 
     console.log('Extracted variations:', variations);
+
+    if (variations.length === 0) {
+      throw new Error('No variations were generated');
+    }
+
+    if (variations.length < 3) {
+      console.warn('Less than 3 variations were generated');
+    }
 
     return new Response(
       JSON.stringify({ variations }), 
