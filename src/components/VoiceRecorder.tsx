@@ -27,7 +27,14 @@ const VoiceRecorder = () => {
     setTranscript 
   } = useVoiceRecorder();
 
-  // Watch for transcript changes
+  const handleLogoClick = () => {
+    console.log('Logo clicked - resetting state');
+    setVariations([]);
+    setSelectedVariation('');
+    setTranscript('');
+    setIsGenerating(false);
+  };
+
   useEffect(() => {
     if (!isRecording && transcript) {
       handleTranscriptGenerated();
@@ -98,7 +105,13 @@ const VoiceRecorder = () => {
   return (
     <div className="max-w-md mx-auto p-6 space-y-6">
       <div className="text-center">
-        <h1 className="text-4xl font-bold italic mb-2 flex items-center justify-center gap-2" style={{ fontFamily: 'Inter', letterSpacing: '-0.025em' }}>
+        <h1 
+          className="text-4xl font-bold italic mb-2 flex items-center justify-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
+          style={{ fontFamily: 'Inter', letterSpacing: '-0.025em' }}
+          onClick={handleLogoClick}
+          role="button"
+          aria-label="Reset to home"
+        >
           <Pen className="w-8 h-8 text-purple-600" />
           Postful
         </h1>
