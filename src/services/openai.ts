@@ -15,20 +15,26 @@ const getPersonalityPrompt = (personality: string) => {
 
 export const generateVariations = async (text: string, personality: string = 'friendly'): Promise<string[]> => {
   try {
-    console.log('Generating variations with personality:', personality);
-    console.log('Input text:', text);
+    console.log('Starting variation generation process...');
+    console.log('Fetching OpenAI API key from Supabase...');
 
     // Fetch the API key from Supabase
-    const { data, error: keyError } = await supabase.rpc('get_secret', {
+    const { data: apiKey, error: keyError } = await supabase.rpc('get_secret', {
       name: 'OPENAI_API_KEY'
     });
 
-    if (keyError || !data) {
+    if (keyError) {
       console.error('Error fetching OpenAI API key:', keyError);
       throw new Error('Failed to fetch OpenAI API key');
     }
 
-    const apiKey = data as string;
+    if (!apiKey) {
+      console.error('OpenAI API key is not set in Supabase secrets');
+      throw new Error('OpenAI API key is not set');
+    }
+
+    console.log('API key retrieved successfully');
+    console.log('Making request to OpenAI API...');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -37,7 +43,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o-mini",
         messages: [{
           role: "system",
           content: getPersonalityPrompt(personality)
