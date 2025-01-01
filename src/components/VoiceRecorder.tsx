@@ -1,14 +1,64 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Square, Share2 } from 'lucide-react';
+import { Mic, Square, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 
 const VoiceRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [variations, setVariations] = useState<string[]>([]);
+  const [selectedVariation, setSelectedVariation] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const { toast } = useToast();
+
+  const generateVariations = async (text: string) => {
+    setIsGenerating(true);
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [{
+            role: "system",
+            content: "You are a social media post optimizer. Generate 3 variations of the given text, optimizing for engagement while maintaining the original message. Make each variation unique in style."
+          }, {
+            role: "user",
+            content: text
+          }],
+          temperature: 0.7
+        })
+      });
+
+      const data = await response.json();
+      console.log('OpenAI response:', data);
+      
+      if (data.choices && data.choices[0]) {
+        const variations = data.choices[0].message.content
+          .split('\n')
+          .filter((v: string) => v.trim().length > 0)
+          .slice(0, 3);
+        setVariations(variations);
+        setSelectedVariation(variations[0]);
+      }
+    } catch (error) {
+      console.error('Error generating variations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate variations. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -18,8 +68,10 @@ const VoiceRecorder = () => {
       mediaRecorder.current.ondataavailable = async (e) => {
         const audioBlob = new Blob([e.data], { type: 'audio/wav' });
         // Here you would typically send the blob to a speech-to-text service
-        // For now, we'll just simulate transcription
-        setTranscript("This is a simulated transcription of your voice note. In a real implementation, this would be the actual transcribed text from your voice recording.");
+        // For now, we'll use a simulated transcription
+        const simulatedTranscript = "This is a simulated transcription of your voice note. In a real implementation, this would be the actual transcribed text from your voice recording.";
+        setTranscript(simulatedTranscript);
+        generateVariations(simulatedTranscript);
       };
 
       mediaRecorder.current.start();
@@ -46,7 +98,8 @@ const VoiceRecorder = () => {
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(transcript);
+    const textToShare = selectedVariation || transcript;
+    navigator.clipboard.writeText(textToShare);
     toast({
       title: "Copied!",
       description: "Post copied to clipboard",
@@ -82,22 +135,49 @@ const VoiceRecorder = () => {
         </div>
       </div>
 
-      {transcript && (
+      {(transcript || variations.length > 0) && (
         <div className="space-y-4">
-          <Textarea
-            value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            className="min-h-[150px] p-4"
-            placeholder="Your transcribed text will appear here..."
-          />
-          
-          <Button
-            onClick={handleShare}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share Post
-          </Button>
+          {isGenerating ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              <span className="ml-2">Generating variations...</span>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <h2 className="font-semibold text-lg">Choose a variation:</h2>
+                <RadioGroup 
+                  value={selectedVariation} 
+                  onValueChange={setSelectedVariation}
+                  className="space-y-4"
+                >
+                  {variations.length > 0 ? variations.map((variation, index) => (
+                    <div key={index} className="flex items-start space-x-2">
+                      <RadioGroupItem value={variation} id={`variation-${index}`} />
+                      <Label htmlFor={`variation-${index}`} className="text-sm leading-relaxed">
+                        {variation}
+                      </Label>
+                    </div>
+                  )) : (
+                    <Textarea
+                      value={transcript}
+                      onChange={(e) => setTranscript(e.target.value)}
+                      className="min-h-[150px] p-4"
+                      placeholder="Your transcribed text will appear here..."
+                    />
+                  )}
+                </RadioGroup>
+              </div>
+              
+              <Button
+                onClick={handleShare}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share Post
+              </Button>
+            </>
+          )}
         </div>
       )}
     </div>
