@@ -22,7 +22,6 @@ export const useVoiceRecorder = () => {
 
       mediaRecorder.current.start();
       setIsRecording(true);
-      setTranscript(''); // Clear previous transcript
       console.log('Recording started');
     } catch (err) {
       console.error('Error accessing microphone:', err);
