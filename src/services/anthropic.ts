@@ -40,7 +40,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+        'anthropic-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
