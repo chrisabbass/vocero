@@ -14,12 +14,22 @@ serve(async (req) => {
   }
 
   try {
-    const { transcript, personality } = await req.json();
-    console.log('Received request with transcript:', transcript);
-    console.log('Personality:', personality);
+    // Parse request body and log it for debugging
+    const requestBody = await req.json();
+    console.log('Received request body:', requestBody);
+
+    const { transcript, personality } = requestBody;
+    
+    if (!transcript) {
+      console.error('No transcript provided in request');
+      throw new Error('No transcript provided');
+    }
+
+    console.log('Processing request with:', { transcript, personality });
 
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY is not set');
       throw new Error('ANTHROPIC_API_KEY is not set');
     }
 
@@ -36,7 +46,7 @@ serve(async (req) => {
         break;
     }
 
-    console.log('Using system prompt:', systemPrompt);
+    console.log('Making request to Anthropic API with system prompt:', systemPrompt);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -61,8 +71,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Anthropic API error:', errorText);
-      throw new Error(`Anthropic API error: ${errorText}`);
+      console.error('Anthropic API error:', response.status, errorText);
+      throw new Error(`Anthropic API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
@@ -82,10 +92,6 @@ serve(async (req) => {
       throw new Error('No variations were generated');
     }
 
-    if (variations.length < 3) {
-      console.warn('Less than 3 variations were generated');
-    }
-
     return new Response(
       JSON.stringify({ variations }), 
       { 
@@ -96,7 +102,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in anthropic-proxy function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }), 
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }), 
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
