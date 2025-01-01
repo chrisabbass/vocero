@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { generateVariations } from '@/services/anthropic';
 import { supabase } from '@/integrations/supabase/client';
 import { usePostManagement } from '@/hooks/usePostManagement';
+import { useVoiceRecorderInit } from '@/hooks/useVoiceRecorderInit';
 import RecordButton from './RecordButton';
 import Header from './Header';
 import ToneSelector from './ToneSelector';
@@ -14,12 +15,17 @@ import LoadingSpinner from './LoadingSpinner';
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
 
 const VoiceRecorder = () => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [personality, setPersonality] = useState<Personality>('friendly');
-  const [recordingCount, setRecordingCount] = useState(0);
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [personality, setPersonality] = React.useState<Personality>('friendly');
   const { toast } = useToast();
+  
+  const {
+    recordingCount,
+    setRecordingCount,
+    showPaywall,
+    setShowPaywall,
+    isLoading
+  } = useVoiceRecorderInit();
   
   const { 
     variations,
@@ -38,47 +44,6 @@ const VoiceRecorder = () => {
     stopRecording,
     setTranscript 
   } = useVoiceRecorder();
-
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('recording_count')
-            .eq('id', session.user.id)
-            .single();
-
-          if (error) {
-            console.error('Error fetching recording count:', error);
-            toast({
-              title: "Error",
-              description: "Failed to load user data. Please try refreshing the page.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          setRecordingCount(data?.recording_count || 0);
-          if ((data?.recording_count || 0) >= 3) {
-            setShowPaywall(true);
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing app:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize the application. Please try refreshing the page.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeApp();
-  }, [toast]);
 
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting state');
