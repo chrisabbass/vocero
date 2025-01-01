@@ -5,17 +5,31 @@ export const useVoiceRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
   const { toast } = useToast();
 
   const startRecording = async () => {
     try {
+      audioChunks.current = [];
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('Got media stream:', stream);
+      
       mediaRecorder.current = new MediaRecorder(stream);
       
-      mediaRecorder.current.ondataavailable = async (e) => {
-        const audioBlob = new Blob([e.data], { type: 'audio/wav' });
-        // For testing purposes, we'll set a simulated transcript
-        const simulatedTranscript = "This is a simulated transcription of your voice note. In a real implementation, this would be the actual transcribed text from your voice recording.";
+      mediaRecorder.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data);
+          console.log('Audio chunk received:', event.data);
+        }
+      };
+
+      mediaRecorder.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
+        console.log('Recording completed, blob size:', audioBlob.size);
+        
+        // For now, we'll use a simulated response since we don't have a speech-to-text service
+        // In a production environment, you would send this blob to a speech-to-text service
+        const simulatedTranscript = "This is what you just said. In a real implementation, this would be the actual transcribed text from your voice recording.";
         console.log('Setting transcript:', simulatedTranscript);
         setTranscript(simulatedTranscript);
       };
