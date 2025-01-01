@@ -51,7 +51,7 @@ serve(async (req) => {
 
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
-    const audioBlob = new Blob([uint8Array], { type: audioFile.type || 'audio/webm' });
+    const audioBlob = new Blob([uint8Array], { type: 'audio/webm' }); // Explicitly set type to audio/webm
     openAIFormData.append('file', audioBlob, 'audio.webm');
     openAIFormData.append('model', 'whisper-1');
     openAIFormData.append('language', 'en');
@@ -59,18 +59,28 @@ serve(async (req) => {
 
     console.log('Sending request to OpenAI Whisper API');
 
-    // Send request to OpenAI's Whisper API
+    // Send request to OpenAI's Whisper API with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
       },
       body: openAIFormData,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error response:', errorText);
+      console.error('OpenAI API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
       
       if (response.status === 401) {
         throw new Error('Invalid OpenAI API key. Please check your API key and try again.');
@@ -93,6 +103,17 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in whisper-transcribe function:', error);
+    
+    // Check if it's an AbortError (timeout)
+    if (error.name === 'AbortError') {
+      return new Response(JSON.stringify({ 
+        error: 'Request timed out. Please try again with a shorter audio recording.',
+        details: error.message
+      }), {
+        status: 408,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     return new Response(JSON.stringify({ 
       error: error.message,
