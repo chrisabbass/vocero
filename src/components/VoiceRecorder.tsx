@@ -3,12 +3,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useSavedPosts } from '@/hooks/useSavedPosts';
 import { generateVariations } from '@/services/anthropic';
-import { Pen, Target, Heart, Sparkles, ChevronDown } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RecordButton from './RecordButton';
 import VariationsSection from './VariationsSection';
 import PostActions from './PostActions';
 import SavedPosts from './SavedPosts';
+import Header from './Header';
+import ToneSelector from './ToneSelector';
 
 type Personality = 'direct' | 'friendly' | 'enthusiastic';
 
@@ -104,59 +104,12 @@ const VoiceRecorder = () => {
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-6">
-      <div className="text-center">
-        <h1 
-          className="text-4xl font-bold italic mb-2 flex items-center justify-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
-          style={{ fontFamily: 'Inter', letterSpacing: '-0.025em' }}
-          onClick={handleLogoClick}
-          role="button"
-          aria-label="Reset to home"
-        >
-          <Pen className="w-8 h-8 text-purple-600" />
-          Postful
-        </h1>
-        <p className="text-slate-600 mb-6">Voice to Viral: Your AI Social Media Assistant</p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-medium text-gray-700">Choose your tone</span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          </div>
-        </div>
-        <ToggleGroup 
-          type="single" 
-          value={personality}
-          onValueChange={(value: Personality) => value && setPersonality(value)}
-          className="justify-center"
-        >
-          <ToggleGroupItem 
-            value="direct" 
-            aria-label="Direct tone" 
-            className={`flex items-center gap-2 transition-all ${personality === 'direct' ? 'bg-primary text-primary-foreground shadow-md scale-105' : ''}`}
-          >
-            <Target className="h-4 w-4" />
-            <span>Direct</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="friendly" 
-            aria-label="Friendly tone" 
-            className={`flex items-center gap-2 transition-all ${personality === 'friendly' ? 'bg-primary text-primary-foreground shadow-md scale-105' : ''}`}
-          >
-            <Heart className="h-4 w-4" />
-            <span>Friendly</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="enthusiastic" 
-            aria-label="Enthusiastic tone" 
-            className={`flex items-center gap-2 transition-all ${personality === 'enthusiastic' ? 'bg-primary text-primary-foreground shadow-md scale-105' : ''}`}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>Enthusiastic</span>
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
+      <Header onLogoClick={handleLogoClick} />
+      
+      <ToneSelector 
+        personality={personality}
+        onPersonalityChange={setPersonality}
+      />
 
       <RecordButton
         isRecording={isRecording}
