@@ -1,8 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -15,14 +13,17 @@ serve(async (req) => {
   }
 
   try {
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    console.log('Checking OpenAI API key...');
+
     if (!openAIApiKey) {
-      console.error('OpenAI API key not found');
-      throw new Error('OpenAI API key not configured');
+      console.error('OpenAI API key not found in environment variables');
+      throw new Error('OpenAI API key not configured. Please add your API key in the Supabase dashboard.');
     }
 
-    // Validate API key format
-    if (!openAIApiKey.startsWith('sk-') || openAIApiKey.length < 20) {
-      console.error('Invalid OpenAI API key format');
+    // Basic API key format validation
+    if (!openAIApiKey.startsWith('sk-')) {
+      console.error('Invalid OpenAI API key format detected');
       throw new Error('Invalid OpenAI API key format. Please ensure you\'ve entered a valid key starting with "sk-"');
     }
 
@@ -58,7 +59,7 @@ serve(async (req) => {
 
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
-    const audioBlob = new Blob([uint8Array], { type: 'audio/webm' });
+    const audioBlob = new Blob([uint8Array], { type: audioFile.type || 'audio/webm' });
     openAIFormData.append('file', audioBlob, 'audio.webm');
     openAIFormData.append('model', 'whisper-1');
     openAIFormData.append('language', 'en');
@@ -77,9 +78,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
+      console.error('OpenAI API error response:', errorText);
       
-      // More specific error handling
       if (response.status === 401) {
         throw new Error('Invalid OpenAI API key. Please check your API key and try again.');
       } else if (response.status === 429) {
@@ -101,9 +101,14 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in whisper-transcribe function:', error);
+    
+    // Determine if it's an Error object
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace available';
+    
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'An unknown error occurred',
-      details: error instanceof Error ? error.stack : 'No stack trace available',
+      error: errorMessage,
+      details: errorStack,
       timestamp: new Date().toISOString()
     }), {
       status: 400,
