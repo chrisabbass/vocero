@@ -25,7 +25,7 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
   }
 
   return (
-    <div className="mt-6 border rounded-lg p-4 max-w-2xl mx-auto">
+    <div className="mt-4 border rounded-lg p-3 max-w-xl mx-auto">
       <Carousel
         opts={{
           align: "start",
@@ -33,7 +33,7 @@ const SavedPosts = ({ posts, onDelete }: SavedPostsProps) => {
         }}
         className="w-full relative"
       >
-        <div className="flex items-center justify-center mb-4">
+        <div className="flex items-center justify-center mb-2">
           <h2 className="text-lg font-semibold">
             Saved Posts ({posts.length}/10)
           </h2>
