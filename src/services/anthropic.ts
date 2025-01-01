@@ -23,9 +23,14 @@ export const generateVariations = async (text: string, personality: string = 'fr
       throw new Error('Failed to fetch Anthropic API key. Please check your Supabase configuration.');
     }
 
-    if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
-      console.error('Invalid or empty API key received');
-      throw new Error('Please set up your Anthropic API key in Supabase secrets');
+    if (!apiKey) {
+      console.error('No API key received');
+      throw new Error('Anthropic API key not found in Supabase secrets. Please set it up.');
+    }
+
+    if (typeof apiKey !== 'string' || !apiKey.startsWith('sk-')) {
+      console.error('Invalid API key format');
+      throw new Error('Invalid Anthropic API key format. Please make sure you\'ve entered a valid key starting with "sk-"');
     }
 
     console.log('API key retrieved successfully');
@@ -93,10 +98,6 @@ export const generateVariations = async (text: string, personality: string = 'fr
   } catch (error) {
     console.error('Error in generateVariations:', error);
     if (error instanceof Error) {
-      // Provide more specific error messages to the user
-      if (error.message.includes('API key')) {
-        throw new Error('Please check if your Anthropic API key is set correctly in Supabase secrets');
-      }
       throw error;
     }
     throw new Error('Failed to generate variations. Please try again.');
