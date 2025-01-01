@@ -8,6 +8,7 @@ import MainContent from './MainContent';
 import ToneSelector from './ToneSelector';
 import type { SavedPost } from '@/types/post';
 import { useVoiceRecorderInit } from '@/hooks/useVoiceRecorderInit';
+import type { Personality } from './ToneSelector';
 
 interface VoiceRecorderProps {
   savedPosts: SavedPost[];
@@ -22,11 +23,10 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
   const [isGenerating, setIsGenerating] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [processingTranscript, setProcessingTranscript] = useState('');
-  const [personality, setPersonality] = useState('friendly');
+  const [personality, setPersonality] = useState<Personality>('friendly');
 
   const {
     isRecording,
-    recordingTime,
     isProcessing,
     startRecording,
     stopRecording,
@@ -41,7 +41,7 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     setIsGenerating(false);
     setTranscript('');
     setProcessingTranscript('');
-    setPersonality('friendly'); // Reset personality to default
+    setPersonality('friendly');
   };
 
   const handleTranscriptGenerated = async (newTranscript: string) => {
@@ -84,13 +84,10 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
         />
 
         <RecordingSection
-          isRecording={isRecording}
-          recordingTime={recordingTime}
-          isProcessing={isProcessing}
-          onStartRecording={startRecording}
-          onStopRecording={stopRecording}
-          onCancelRecording={cancelRecording}
+          isGenerating={isGenerating}
           onTranscriptGenerated={handleTranscriptGenerated}
+          recordingCount={0}
+          onShowPaywall={() => {}}
         />
 
         <MainContent

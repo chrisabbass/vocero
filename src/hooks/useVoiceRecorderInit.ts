@@ -6,7 +6,48 @@ export const useVoiceRecorderInit = () => {
   const [recordingCount, setRecordingCount] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+
+  const startRecording = () => {
+    setIsRecording(true);
+    setIsProcessing(false);
+  };
+
+  const stopRecording = () => {
+    setIsRecording(false);
+    setIsProcessing(true);
+  };
+
+  const cancelRecording = () => {
+    setIsRecording(false);
+    setIsProcessing(false);
+  };
+
+  const generateVariations = async (transcript: string, personality: string) => {
+    try {
+      const response = await fetch('https://nmjmurbaaevmakymqiyc.supabase.co/functions/v1/anthropic-proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ transcript, personality }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate variations');
+      }
+
+      const data = await response.json();
+      return data.variations || [];
+    } catch (error) {
+      console.error('Error generating variations:', error);
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -54,6 +95,12 @@ export const useVoiceRecorderInit = () => {
     setRecordingCount,
     showPaywall,
     setShowPaywall,
-    isLoading
+    isLoading,
+    isRecording,
+    isProcessing,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+    generateVariations
   };
 };

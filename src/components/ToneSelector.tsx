@@ -2,14 +2,15 @@ import React from 'react';
 import { Target, Heart, Sparkles, ChevronDown } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-type Personality = 'direct' | 'friendly' | 'enthusiastic';
+export type Personality = 'direct' | 'friendly' | 'enthusiastic';
 
 interface ToneSelectorProps {
   personality: Personality;
   onPersonalityChange: (value: Personality) => void;
+  disabled?: boolean;
 }
 
-const ToneSelector = ({ personality, onPersonalityChange }: ToneSelectorProps) => {
+const ToneSelector = ({ personality, onPersonalityChange, disabled }: ToneSelectorProps) => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-center gap-2">
@@ -23,6 +24,7 @@ const ToneSelector = ({ personality, onPersonalityChange }: ToneSelectorProps) =
         value={personality}
         onValueChange={(value: Personality) => value && onPersonalityChange(value)}
         className="justify-center"
+        disabled={disabled}
       >
         <ToggleGroupItem 
           value="direct" 
