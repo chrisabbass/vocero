@@ -3,16 +3,20 @@ import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useSavedPosts } from '@/hooks/useSavedPosts';
 import { generateVariations } from '@/services/openai';
-import { Pen } from 'lucide-react';
+import { Pen, Target, Heart, Sparkles } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RecordButton from './RecordButton';
 import VariationsSection from './VariationsSection';
 import PostActions from './PostActions';
 import SavedPosts from './SavedPosts';
 
+type Personality = 'direct' | 'friendly' | 'enthusiastic';
+
 const VoiceRecorder = () => {
   const [variations, setVariations] = useState<string[]>([]);
   const [selectedVariation, setSelectedVariation] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [personality, setPersonality] = useState<Personality>('friendly');
   const { toast } = useToast();
   const { savedPosts, savePost, deletePost } = useSavedPosts();
   const { 
@@ -27,7 +31,7 @@ const VoiceRecorder = () => {
     stopRecording();
     try {
       setIsGenerating(true);
-      const newVariations = await generateVariations(transcript);
+      const newVariations = await generateVariations(transcript, personality);
       setVariations(newVariations);
       setSelectedVariation(newVariations[0]);
     } catch (error) {
@@ -78,6 +82,31 @@ const VoiceRecorder = () => {
         <p className="text-slate-600 mb-6">Record your voice to create a social post</p>
       </div>
 
+      <div className="space-y-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Choose your tone:
+        </label>
+        <ToggleGroup 
+          type="single" 
+          value={personality}
+          onValueChange={(value: Personality) => value && setPersonality(value)}
+          className="justify-center"
+        >
+          <ToggleGroupItem value="direct" aria-label="Direct tone" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            <span>Direct</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="friendly" aria-label="Friendly tone" className="flex items-center gap-2">
+            <Heart className="h-4 w-4" />
+            <span>Friendly</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="enthusiastic" aria-label="Enthusiastic tone" className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            <span>Enthusiastic</span>
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
       <RecordButton
         isRecording={isRecording}
         onStartRecording={startRecording}
@@ -91,7 +120,7 @@ const VoiceRecorder = () => {
             selectedVariation={selectedVariation}
             onVariationChange={setSelectedVariation}
             transcript={transcript}
-            onTranscriptChange={(e) => setTranscript(e)}
+            onTranscriptChange={setTranscript}
             isGenerating={isGenerating}
           />
           

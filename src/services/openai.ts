@@ -8,8 +8,21 @@ interface OpenAIResponse {
   }>;
 }
 
-export const generateVariations = async (text: string) => {
-  console.log('Generating variations for text:', text);
+const getPersonalityPrompt = (personality: string) => {
+  switch (personality) {
+    case 'direct':
+      return "You are a concise and straightforward social media writer. Focus on clarity and brevity. Get straight to the point without unnecessary words or fluff.";
+    case 'friendly':
+      return "You are a warm and approachable social media writer. Write in a conversational, relatable tone that makes readers feel comfortable and connected.";
+    case 'enthusiastic':
+      return "You are an energetic and passionate social media writer. Use dynamic language and show excitement about the topic. Make the content engaging and inspiring!";
+    default:
+      return "You are a professional social media writer focused on creating engaging content.";
+  }
+};
+
+export const generateVariations = async (text: string, personality: string = 'friendly') => {
+  console.log('Generating variations for text:', text, 'with personality:', personality);
   
   // Get the API key from Supabase
   const { data: apiKey, error: secretError } = await supabase.rpc('get_secret', {
@@ -28,13 +41,13 @@ export const generateVariations = async (text: string) => {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [{
         role: "system",
-        content: "You are a social media post optimizer. Generate 3 variations of the given text, optimizing for engagement while maintaining the original message. Make each variation unique in style."
+        content: getPersonalityPrompt(personality)
       }, {
         role: "user",
-        content: text
+        content: `Create 3 variations of this text for social media, maintaining the selected tone: ${text}`
       }],
       temperature: 0.7
     })
