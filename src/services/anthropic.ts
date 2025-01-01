@@ -13,7 +13,14 @@ export const generateVariations = async (text: string, personality: string = 'fr
       throw new Error('Please provide some text to generate variations');
     }
 
+    console.log('Fetching API key...');
     const apiKey = await getAnthropicApiKey();
+    
+    if (!apiKey) {
+      console.error('No API key returned from getAnthropicApiKey');
+      throw new Error('Failed to retrieve Anthropic API key');
+    }
+    
     console.log('Successfully retrieved API key, making request to Anthropic...');
     
     const systemPrompt = getPersonalityPrompt(personality);

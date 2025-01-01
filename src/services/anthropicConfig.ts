@@ -22,17 +22,13 @@ export const getAnthropicApiKey = async (): Promise<string> => {
 
     if (!data || !data.value) {
       console.error('No Anthropic API key found in database. Data returned:', data);
-      throw new Error('Anthropic API key is missing. Please check the Supabase secrets table and ensure the API key is correctly set.');
+      throw new Error('Anthropic API key not found in database. Please ensure it is set in Supabase secrets.');
     }
 
     console.log('Successfully retrieved Anthropic API key');
     return data.value;
   } catch (error) {
     console.error('Error in getAnthropicApiKey:', error);
-    
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('Unexpected error retrieving Anthropic API key');
+    throw new Error('Failed to retrieve Anthropic API key. Please check console for details.');
   }
 };
