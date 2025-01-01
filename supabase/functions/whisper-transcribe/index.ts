@@ -20,6 +20,12 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Validate API key format
+    if (!openAIApiKey.startsWith('sk-') || openAIApiKey.length < 20) {
+      console.error('Invalid OpenAI API key format');
+      throw new Error('Invalid OpenAI API key format. Please ensure you\'ve entered a valid key starting with "sk-"');
+    }
+
     console.log('Starting transcription process');
     
     // Get the form data from the request
@@ -72,7 +78,15 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${errorText}`);
+      
+      // More specific error handling
+      if (response.status === 401) {
+        throw new Error('Invalid OpenAI API key. Please check your API key and try again.');
+      } else if (response.status === 429) {
+        throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+      } else {
+        throw new Error(`OpenAI API error: ${errorText}`);
+      }
     }
 
     const data = await response.json();
@@ -88,8 +102,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in whisper-transcribe function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
-      details: error.stack || 'No stack trace available',
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+      details: error instanceof Error ? error.stack : 'No stack trace available',
       timestamp: new Date().toISOString()
     }), {
       status: 400,
