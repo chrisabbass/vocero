@@ -8,7 +8,7 @@ export const getAnthropicApiKey = async (): Promise<string> => {
       .from('secrets')
       .select('value')
       .eq('name', 'ANTHROPIC_API_KEY')
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Database error when fetching Anthropic API key:', {
@@ -22,17 +22,14 @@ export const getAnthropicApiKey = async (): Promise<string> => {
 
     if (!data || !data.value) {
       console.error('No Anthropic API key found in database. Data returned:', data);
-      
-      // Provide a more helpful error message
-      throw new Error('Anthropic API key is missing. Please add the API key in the Supabase secrets table.');
+      throw new Error('Anthropic API key is missing. Please check the Supabase secrets table and ensure the API key is correctly set.');
     }
 
     console.log('Successfully retrieved Anthropic API key');
     return data.value;
   } catch (error) {
-    console.error('Comprehensive error in getAnthropicApiKey:', error);
+    console.error('Error in getAnthropicApiKey:', error);
     
-    // If the error is an instance of Error, rethrow it, otherwise create a new error
     if (error instanceof Error) {
       throw error;
     }
