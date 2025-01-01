@@ -3,7 +3,6 @@ import PostMetrics from '@/components/PostMetrics';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { useSavedPosts } from '@/hooks/useSavedPosts';
 import { 
   Select,
   SelectContent,
@@ -19,9 +18,9 @@ import {
 import { Line, LineChart, XAxis, YAxis } from "recharts";
 
 const Analytics = () => {
-  const { savedPosts } = useSavedPosts();
   const [timeRange, setTimeRange] = useState('week');
 
+  // Query for all metrics data
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['post-metrics', timeRange],
     queryFn: async () => {
@@ -57,6 +56,28 @@ const Analytics = () => {
     },
   });
 
+  // Query for unique shared posts
+  const { data: sharedPosts, isLoading: isLoadingSharedPosts } = useQuery({
+    queryKey: ['shared-posts'],
+    queryFn: async () => {
+      console.log('Fetching shared posts');
+      const { data, error } = await supabase
+        .from('post_metrics')
+        .select('post_content')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching shared posts:', error);
+        throw error;
+      }
+
+      // Get unique posts
+      const uniquePosts = Array.from(new Set(data.map(m => m.post_content)));
+      console.log('Unique shared posts:', uniquePosts);
+      return uniquePosts;
+    },
+  });
+
   const aggregateMetricsByDate = (metrics: any[]) => {
     if (!metrics) return [];
     
@@ -83,7 +104,7 @@ const Analytics = () => {
 
   const chartData = aggregateMetricsByDate(metrics);
 
-  if (isLoading) {
+  if (isLoading || isLoadingSharedPosts) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -125,14 +146,20 @@ const Analytics = () => {
       </div>
 
       <h2 className="text-lg font-semibold mb-4">Individual Post Performance</h2>
-      <div className="space-y-8">
-        {savedPosts?.map((post) => (
-          <div key={post.id} className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm mb-4">{post.content}</p>
-            <PostMetrics postContent={post.content} />
-          </div>
-        ))}
-      </div>
+      {sharedPosts && sharedPosts.length > 0 ? (
+        <div className="space-y-8">
+          {sharedPosts.map((postContent) => (
+            <div key={postContent} className="bg-white rounded-lg shadow p-6">
+              <p className="text-sm mb-4">{postContent}</p>
+              <PostMetrics postContent={postContent} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          No shared posts found. Share some posts on Twitter or LinkedIn to see their performance here.
+        </div>
+      )}
     </div>
   );
 };
