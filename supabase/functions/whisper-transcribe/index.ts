@@ -38,15 +38,26 @@ serve(async (req) => {
       size: audioFile.size
     });
 
+    // Validate audio file size
+    if (audioFile.size === 0) {
+      throw new Error('Audio file is empty');
+    }
+
+    if (audioFile.size > 25 * 1024 * 1024) { // 25MB limit
+      throw new Error('Audio file too large. Maximum size is 25MB');
+    }
+
     // Convert the file to array buffer
     const arrayBuffer = await audioFile.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
-    const audioBlob = new Blob([uint8Array], { type: 'audio/wav' });
+    const audioBlob = new Blob([uint8Array], { type: audioFile.type });
     openAIFormData.append('file', audioBlob, 'audio.wav');
     openAIFormData.append('model', 'whisper-1');
+    openAIFormData.append('language', 'en'); // Specify English for better accuracy
+    openAIFormData.append('response_format', 'json');
 
     console.log('Sending request to OpenAI Whisper API');
 
@@ -66,32 +77,40 @@ serve(async (req) => {
       console.error('OpenAI API error:', errorText);
       
       // More detailed error handling
-      return new Response(JSON.stringify({ 
-        error: 'OpenAI API request failed', 
-        details: errorText,
-        status: response.status 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      if (response.status === 401) {
+        throw new Error('Authentication failed with OpenAI API');
+      } else if (response.status === 400) {
+        throw new Error('Invalid audio format or corrupted file');
+      } else if (response.status === 413) {
+        throw new Error('Audio file too large');
+      } else {
+        throw new Error(`OpenAI API error: ${errorText}`);
+      }
     }
 
     const data = await response.json();
     console.log('Transcription successful:', data);
+
+    if (!data.text || data.text.trim() === '') {
+      throw new Error('No speech detected in the audio');
+    }
 
     return new Response(JSON.stringify({ text: data.text }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in whisper-transcribe function:', error);
+    
+    // Send a more user-friendly error message
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.stack,
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : 'No stack trace available',
         timestamp: new Date().toISOString()
       }),
       { 
-        status: 500, 
+        status: 400, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
