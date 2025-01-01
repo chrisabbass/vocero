@@ -148,12 +148,6 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
             <Linkedin className="w-4 h-4" />
             Share on LinkedIn
           </DropdownMenuItem>
-          {isMobile && navigator.share && (
-            <DropdownMenuItem onClick={() => handleShare()} className="gap-2">
-              <Share2 className="w-4 h-4" />
-              Share via...
-            </DropdownMenuItem>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
