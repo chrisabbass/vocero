@@ -29,8 +29,6 @@ const MainContent = ({
 
   return (
     <div className="space-y-6">
-      <SavedPosts posts={savedPosts} onDelete={onDeletePost} />
-
       {variations.length > 0 && (
         <VariationsSection
           variations={variations}
@@ -49,6 +47,8 @@ const MainContent = ({
           isSavedPost={false}
         />
       )}
+
+      <SavedPosts posts={savedPosts} onDelete={onDeletePost} />
     </div>
   );
 };
