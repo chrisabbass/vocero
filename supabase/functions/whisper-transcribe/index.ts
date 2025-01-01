@@ -18,17 +18,9 @@ serve(async (req) => {
 
     if (!openAIApiKey) {
       console.error('OpenAI API key not found in environment variables');
-      throw new Error('OpenAI API key not configured. Please add your API key in the Supabase dashboard.');
+      throw new Error('OpenAI API key not configured');
     }
 
-    // Basic API key format validation
-    if (!openAIApiKey.startsWith('sk-')) {
-      console.error('Invalid OpenAI API key format detected');
-      throw new Error('Invalid OpenAI API key format. Please ensure you\'ve entered a valid key starting with "sk-"');
-    }
-
-    console.log('Starting transcription process');
-    
     // Get the form data from the request
     const formData = await req.formData();
     const audioFile = formData.get('audio');
@@ -102,13 +94,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in whisper-transcribe function:', error);
     
-    // Determine if it's an Error object
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    const errorStack = error instanceof Error ? error.stack : 'No stack trace available';
-    
     return new Response(JSON.stringify({ 
-      error: errorMessage,
-      details: errorStack,
+      error: error.message,
+      details: error.stack,
       timestamp: new Date().toISOString()
     }), {
       status: 400,
