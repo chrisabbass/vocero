@@ -24,12 +24,35 @@ const Login = () => {
       </button>
 
       <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-semibold text-center mb-2">Welcome</h1>
+        <h1 className="text-2xl font-semibold text-center mb-2">
+          {from === "/analytics" ? "Unlock Analytics Features!" : "Welcome Back!"}
+        </h1>
         <p className="text-gray-600 text-center mb-6">
           {from === "/analytics" 
-            ? "Please sign in to access analytics"
-            : "Sign in to your account"}
+            ? "Sign in to access detailed analytics and track your content performance"
+            : "Sign in to save your recordings and access analytics"}
         </p>
+
+        <div className="space-y-4 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+              <span className="text-purple-600">1</span>
+            </div>
+            <p className="text-sm">Track performance across social platforms</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+              <span className="text-purple-600">2</span>
+            </div>
+            <p className="text-sm">View detailed engagement metrics</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+              <span className="text-purple-600">3</span>
+            </div>
+            <p className="text-sm">Get insights on your best performing content</p>
+          </div>
+        </div>
         
         <Auth
           supabaseClient={supabase}
