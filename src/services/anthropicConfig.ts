@@ -7,16 +7,21 @@ export const getAnthropicApiKey = async (): Promise<string> => {
     .from('secrets')
     .select('value')
     .eq('name', 'ANTHROPIC_API_KEY')
-    .single();
+    .maybeSingle();
 
   if (error) {
-    console.error('Error fetching Anthropic API key:', error);
+    console.error('Error fetching Anthropic API key:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
     throw new Error('Failed to fetch Anthropic API key from database');
   }
 
   if (!secretValue?.value) {
     console.error('No Anthropic API key found in database');
-    throw new Error('Anthropic API key not found in database. Please make sure you have added it correctly.');
+    throw new Error('Anthropic API key not found in database. Please make sure you have added it correctly using the secret form.');
   }
 
   console.log('Successfully retrieved Anthropic API key');
