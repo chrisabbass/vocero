@@ -34,6 +34,8 @@ const MainContent = ({
 
   return (
     <div className="space-y-6">
+      <SavedPosts posts={savedPosts} onDelete={onDeletePost} />
+
       <div className="space-y-4">
         <Textarea
           placeholder="Your transcribed text will appear here..."
@@ -56,6 +58,9 @@ const MainContent = ({
           variations={variations}
           selectedVariation={selectedVariation}
           onVariationChange={onVariationChange}
+          transcript={transcript}
+          onTranscriptChange={onTranscriptChange}
+          isGenerating={isGenerating}
         />
       )}
 
@@ -66,8 +71,6 @@ const MainContent = ({
           isSavedPost={false}
         />
       )}
-
-      <SavedPosts posts={savedPosts} onDelete={onDeletePost} />
     </div>
   );
 };
