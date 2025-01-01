@@ -42,11 +42,10 @@ serve(async (req) => {
     const arrayBuffer = await audioFile.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    console.log('Preparing OpenAI API request');
-
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
-    openAIFormData.append('file', new Blob([uint8Array], { type: 'audio/wav' }), 'audio.wav');
+    const audioBlob = new Blob([uint8Array], { type: 'audio/wav' });
+    openAIFormData.append('file', audioBlob, 'audio.wav');
     openAIFormData.append('model', 'whisper-1');
 
     console.log('Sending request to OpenAI Whisper API');

@@ -36,9 +36,11 @@ export const useVoiceRecorder = () => {
           const response = await fetch('https://nmjmurbaaevmakymqiyc.supabase.co/functions/v1/whisper-transcribe', {
             method: 'POST',
             body: formData,
-            // Add mode: 'cors' and credentials: 'omit' for better CORS handling
             mode: 'cors',
             credentials: 'omit',
+            headers: {
+              'Accept': 'application/json',
+            }
           });
 
           if (!response.ok) {
