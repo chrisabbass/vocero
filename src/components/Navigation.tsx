@@ -6,7 +6,7 @@ const Navigation = () => {
   const location = useLocation();
 
   return (
-    <nav className="border-b mb-4">
+    <nav>
       <div className="container mx-auto px-4">
         <div className="flex space-x-4 py-4">
           <Link
