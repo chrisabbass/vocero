@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useSavedPosts } from '@/hooks/useSavedPosts';
-import { generateVariations } from '@/services/openai';
+import { generateVariations } from '@/services/anthropic';
 import { Pen, Target, Heart, Sparkles, ChevronDown } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import RecordButton from './RecordButton';
@@ -38,7 +38,7 @@ const VoiceRecorder = () => {
       console.error('Error generating variations:', error);
       toast({
         title: "Error",
-        description: "Failed to generate variations. Please check if your OpenAI API key is set correctly.",
+        description: "Failed to generate variations. Please check if your Anthropic API key is set correctly.",
         variant: "destructive",
       });
     } finally {
