@@ -79,7 +79,7 @@ const VoiceRecorder = () => {
           <Pen className="w-8 h-8 text-purple-600" />
           Postful
         </h1>
-        <p className="text-slate-600 mb-6">Record your voice to create a social post</p>
+        <p className="text-slate-600 mb-6">From Voice to Viral: Your AI Social Media Assistant</p>
       </div>
 
       <div className="space-y-4">
