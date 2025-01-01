@@ -45,14 +45,9 @@ serve(async (req) => {
       throw new Error('Audio file too large. Maximum size is 25MB');
     }
 
-    // Convert the file to array buffer
-    const arrayBuffer = await audioFile.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-
     // Create form data for OpenAI API
     const openAIFormData = new FormData();
-    const audioBlob = new Blob([uint8Array], { type: 'audio/webm' }); // Explicitly set type to audio/webm
-    openAIFormData.append('file', audioBlob, 'audio.webm');
+    openAIFormData.append('file', audioFile);
     openAIFormData.append('model', 'whisper-1');
     openAIFormData.append('language', 'en');
     openAIFormData.append('response_format', 'json');
@@ -84,8 +79,6 @@ serve(async (req) => {
       
       if (response.status === 401) {
         throw new Error('Invalid OpenAI API key. Please check your API key and try again.');
-      } else if (response.status === 429) {
-        throw new Error('OpenAI API rate limit exceeded. Please try again later.');
       } else {
         throw new Error(`OpenAI API error: ${errorText}`);
       }

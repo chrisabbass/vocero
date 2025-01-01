@@ -11,12 +11,10 @@ export const useVoiceRecorder = () => {
   // Function to get supported MIME type
   const getSupportedMimeType = () => {
     const types = [
-      'audio/webm',
       'audio/webm;codecs=opus',
       'audio/ogg;codecs=opus',
-      'audio/mp4',
-      'audio/aac',
-      'audio/wav'
+      'audio/wav',
+      'audio/mp4'
     ];
 
     for (const type of types) {
@@ -48,13 +46,11 @@ export const useVoiceRecorder = () => {
         throw new Error('No supported audio MIME type found on this browser');
       }
 
-      const options = { 
+      console.log('Creating MediaRecorder with MIME type:', mimeType);
+      mediaRecorder.current = new MediaRecorder(stream, {
         mimeType,
         audioBitsPerSecond: 128000
-      };
-
-      console.log('Creating MediaRecorder with options:', options);
-      mediaRecorder.current = new MediaRecorder(stream, options);
+      });
       
       mediaRecorder.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -66,11 +62,11 @@ export const useVoiceRecorder = () => {
       mediaRecorder.current.onstop = async () => {
         console.log('Processing audio chunks...');
         const audioBlob = new Blob(audioChunks.current, { type: mimeType });
-        console.log('Audio blob created, size:', audioBlob.size);
+        console.log('Audio blob created, size:', audioBlob.size, 'type:', audioBlob.type);
         
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob);
+          formData.append('audio', audioBlob, `audio.${mimeType.split('/')[1].split(';')[0]}`);
 
           console.log('Sending audio to Whisper API...');
           const response = await fetch('https://nmjmurbaaevmakymqiyc.supabase.co/functions/v1/whisper-transcribe', {
@@ -79,7 +75,9 @@ export const useVoiceRecorder = () => {
           });
 
           if (!response.ok) {
-            throw new Error('Failed to transcribe audio');
+            const errorData = await response.json();
+            console.error('Transcription API error:', errorData);
+            throw new Error(errorData.error || 'Failed to transcribe audio');
           }
 
           const data = await response.json();
@@ -100,7 +98,7 @@ export const useVoiceRecorder = () => {
         }
       };
 
-      mediaRecorder.current.start(10);
+      mediaRecorder.current.start(1000); // Collect data every second
       setIsRecording(true);
       console.log('Recording started');
     } catch (err) {
