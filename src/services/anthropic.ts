@@ -13,26 +13,12 @@ export const generateVariations = async (text: string, personality: string = 'fr
       throw new Error('Please provide some text to generate variations');
     }
 
-    console.log('Fetching API key...');
-    const apiKey = await getAnthropicApiKey();
-    
-    if (!apiKey) {
-      console.error('No API key returned from getAnthropicApiKey');
-      throw new Error('Failed to retrieve Anthropic API key');
-    }
-    
-    console.log('Successfully retrieved API key, making request to Anthropic...');
+    console.log('Making request to Supabase Edge Function...');
     
     const systemPrompt = getPersonalityPrompt(personality);
     const userPrompt = `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${text}`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
+    const { data, error } = await supabase.functions.invoke('anthropic-proxy', {
       body: JSON.stringify({
         model: "claude-3-sonnet-20240229",
         max_tokens: 1024,
@@ -49,21 +35,17 @@ export const generateVariations = async (text: string, personality: string = 'fr
       })
     });
 
-    console.log('Received response from Anthropic API:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Anthropic API error response:', errorText);
-      throw new Error(`Anthropic API error (${response.status}): ${errorText}`);
+    if (error) {
+      console.error('Edge Function error:', error);
+      throw new Error(`Edge Function error: ${error.message}`);
     }
 
-    const data = await response.json();
-    console.log('Successfully parsed API response');
+    console.log('Successfully received response from Edge Function');
 
     const content = data.content?.[0]?.text;
     if (!content) {
       console.error('Unexpected API response format:', data);
-      throw new Error('Invalid response format from Anthropic API');
+      throw new Error('Invalid response format from API');
     }
 
     const variations = content
