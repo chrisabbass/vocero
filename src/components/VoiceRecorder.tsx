@@ -1,10 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Square, Share2, Loader2 } from 'lucide-react';
+import { Mic, Square, Share2, Loader2, Twitter, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const VoiceRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -104,12 +110,23 @@ const VoiceRecorder = () => {
     }
   };
 
-  const handleShare = () => {
+  const shareToTwitter = () => {
     const textToShare = selectedVariation || transcript;
-    navigator.clipboard.writeText(textToShare);
+    const encodedText = encodeURIComponent(textToShare);
+    window.open(`https://twitter.com/intent/tweet?text=${encodedText}`, '_blank');
     toast({
-      title: "Copied!",
-      description: "Post copied to clipboard",
+      title: "Opening Twitter",
+      description: "Redirecting you to post on Twitter",
+    });
+  };
+
+  const shareToLinkedIn = () => {
+    const textToShare = selectedVariation || transcript;
+    const encodedText = encodeURIComponent(textToShare);
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=https://example.com&summary=${encodedText}`, '_blank');
+    toast({
+      title: "Opening LinkedIn",
+      description: "Redirecting you to post on LinkedIn",
     });
   };
 
@@ -176,13 +193,26 @@ const VoiceRecorder = () => {
                 </RadioGroup>
               </div>
               
-              <Button
-                onClick={handleShare}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Post
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share Post
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuItem onClick={shareToTwitter}>
+                    <Twitter className="mr-2 h-4 w-4" />
+                    Share on Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={shareToLinkedIn}>
+                    <Linkedin className="mr-2 h-4 w-4" />
+                    Share on LinkedIn
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>
