@@ -22,7 +22,7 @@ const getPersonalityPrompt = (personality: string) => {
 };
 
 export const generateVariations = async (text: string, personality: string = 'friendly') => {
-  console.log('Generating variations for text:', text, 'with personality:', personality);
+  console.log('Starting variation generation for text:', text, 'with personality:', personality);
   
   // Get the API key from Supabase
   const { data: apiKey, error: secretError } = await supabase.rpc('get_secret', {
@@ -38,6 +38,8 @@ export const generateVariations = async (text: string, personality: string = 'fr
     console.error('No OpenAI API key found');
     throw new Error('OpenAI API key not found in Supabase secrets');
   }
+
+  console.log('Successfully retrieved API key from Supabase');
 
   try {
     console.log('Making request to OpenAI API...');
@@ -59,6 +61,8 @@ export const generateVariations = async (text: string, personality: string = 'fr
         temperature: 0.7
       })
     });
+
+    console.log('Received response from OpenAI API');
 
     if (!response.ok) {
       const errorData = await response.json();
