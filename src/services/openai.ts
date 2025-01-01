@@ -40,6 +40,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
   }
 
   try {
+    console.log('Making request to OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -47,7 +48,7 @@ export const generateVariations = async (text: string, personality: string = 'fr
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [{
           role: "system",
           content: getPersonalityPrompt(personality)
