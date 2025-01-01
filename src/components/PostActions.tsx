@@ -93,7 +93,7 @@ const PostActions = ({ onSave, textToShare, isSavedPost = false }: PostActionsPr
   };
 
   return (
-    <div className="flex gap-2 justify-end mt-4">
+    <div className="flex gap-2 justify-center mt-4">
       <Button
         variant="outline"
         size="sm"
