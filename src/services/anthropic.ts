@@ -2,24 +2,32 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const generateVariations = async (text: string, personality: string = 'friendly'): Promise<string[]> => {
   try {
-    console.log('Starting variation generation with text:', text);
-    console.log('Using personality:', personality);
+    console.log('Starting variation generation process...');
+    console.log('Input text:', text);
+    console.log('Selected personality:', personality);
     
+    // Fetch API key with improved error handling
     const { data: apiKey, error: keyError } = await supabase.rpc('get_secret', {
       name: 'ANTHROPIC_API_KEY'
     });
 
     if (keyError) {
       console.error('Error fetching API key:', keyError);
-      throw new Error('Failed to fetch API key from Supabase');
+      throw new Error('Failed to fetch Anthropic API key from Supabase');
     }
 
-    if (!apiKey) {
-      console.error('No API key found in Supabase secrets');
-      throw new Error('Anthropic API key is not set in Supabase secrets');
+    if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
+      console.error('Invalid or missing API key');
+      throw new Error('Please set up your Anthropic API key in Supabase secrets');
     }
 
     console.log('API key retrieved successfully');
+
+    // Validate input text
+    if (!text || text.trim() === '') {
+      console.error('Empty input text');
+      throw new Error('Please provide some text to generate variations');
+    }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -41,17 +49,17 @@ export const generateVariations = async (text: string, personality: string = 'fr
     console.log('API Response status:', response.status);
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('API Error:', errorData);
-      throw new Error(`API error: ${errorData.error?.message || 'Unknown error'}`);
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`Anthropic API error (${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('API Response:', data);
+    console.log('API Response data:', data);
 
     if (!data.content?.[0]?.text) {
-      console.error('Unexpected response format:', data);
-      throw new Error('Invalid response format from API');
+      console.error('Unexpected API response format:', data);
+      throw new Error('Invalid response format from Anthropic API');
     }
 
     const variations = data.content[0].text
@@ -60,11 +68,13 @@ export const generateVariations = async (text: string, personality: string = 'fr
       .map((v: string) => v.replace(/^\d+\.\s*/, '').trim())
       .slice(0, 3);
 
-    console.log('Generated variations:', variations);
+    console.log('Successfully generated variations:', variations);
     return variations;
+
   } catch (error) {
     console.error('Error in generateVariations:', error);
-    throw error;
+    // Rethrow with a user-friendly message
+    throw new Error(error instanceof Error ? error.message : 'Failed to generate variations');
   }
 };
 
