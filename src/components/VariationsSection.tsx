@@ -2,7 +2,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import LoadingSpinner from './LoadingSpinner';
 
 interface VariationsSectionProps {
   variations: string[];
@@ -21,10 +20,6 @@ const VariationsSection = ({
   onTranscriptChange,
   isGenerating
 }: VariationsSectionProps) => {
-  if (isGenerating) {
-    return <LoadingSpinner message="Generating variations..." />;
-  }
-
   return (
     <div className="space-y-4">
       {variations.length > 0 ? (

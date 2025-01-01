@@ -43,8 +43,8 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     setTranscript 
   } = useVoiceRecorder();
 
-  console.log('VoiceRecorder savedPosts:', savedPosts); // Debug log
-  console.log('VoiceRecorder variations:', variations); // Debug log
+  console.log('VoiceRecorder savedPosts:', savedPosts);
+  console.log('VoiceRecorder variations:', variations);
 
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting state');
@@ -145,16 +145,20 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
         onStopRecording={stopRecording}
       />
 
-      <MainContent
-        transcript={transcript}
-        variations={variations}
-        selectedVariation={selectedVariation}
-        onVariationChange={setSelectedVariation}
-        isGenerating={isGenerating}
-        onSavePost={onSavePost}
-        savedPosts={savedPosts}
-        onDeletePost={onDeletePost}
-      />
+      {isGenerating ? (
+        <LoadingSpinner message="Generating variations..." />
+      ) : (
+        <MainContent
+          transcript={transcript}
+          variations={variations}
+          selectedVariation={selectedVariation}
+          onVariationChange={setSelectedVariation}
+          isGenerating={isGenerating}
+          onSavePost={onSavePost}
+          savedPosts={savedPosts}
+          onDeletePost={onDeletePost}
+        />
+      )}
 
       <PaywallDialog 
         isOpen={showPaywall} 
