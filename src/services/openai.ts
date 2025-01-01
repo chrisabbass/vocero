@@ -4,11 +4,11 @@ export const generateVariations = async (text: string) => {
   console.log('Generating variations for text:', text);
   
   // Get the API key from Supabase
-  const { data: { secret: apiKey }, error: secretError } = await supabase.rpc('get_secret', {
+  const { data, error: secretError } = await supabase.rpc('get_secret', {
     name: 'OPENAI_API_KEY'
   });
 
-  if (secretError || !apiKey) {
+  if (secretError || !data) {
     console.error('Error fetching OpenAI API key:', secretError);
     throw new Error('Failed to fetch OpenAI API key. Please ensure it is set in Supabase secrets.');
   }
@@ -17,7 +17,7 @@ export const generateVariations = async (text: string) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Authorization': `Bearer ${data}`
     },
     body: JSON.stringify({
       model: "gpt-4",
