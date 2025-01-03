@@ -17,46 +17,41 @@ const Login = () => {
   };
 
   useEffect(() => {
-    // Single subscription to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
-      
-      if (event === 'SIGNED_IN') {
-        if (session?.user) {
-          const isNewUser = session.user.created_at === session.user.last_sign_in_at;
-          
-          if (isNewUser) {
-            console.log('New user signed up:', session.user.email);
-            toast({
-              title: "Welcome to Vocero! 🎉",
-              description: "Your account has been created successfully.",
-            });
-            
-            try {
-              // Only attempt to send welcome email for new users
-              const { error: welcomeError } = await supabase.functions.invoke('welcome-email', {
-                body: { email: session.user.email }
-              });
-              
-              if (welcomeError) {
-                console.error('Welcome email error:', welcomeError);
-              } else {
-                console.log('Welcome email sent successfully');
-              }
-            } catch (error) {
-              console.error('Failed to send welcome email:', error);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.email);
+
+      if (event === "SIGNED_IN" && session?.user) {
+        const isNewUser = session.user.created_at === session.user.last_sign_in_at;
+        
+        if (isNewUser) {
+          console.log("New user signed up:", session.user.email);
+          toast({
+            title: "Welcome to Vocero! 🎉",
+            description: "Your account has been created successfully.",
+          });
+
+          // Send welcome email for new users
+          const { error: welcomeError } = await supabase.functions.invoke(
+            "welcome-email",
+            {
+              body: { email: session.user.email },
             }
-          } else {
-            console.log('Existing user signed in:', session.user.email);
-            toast({
-              title: "Welcome back! 👋",
-              description: "You've successfully signed in.",
-            });
+          );
+
+          if (welcomeError) {
+            console.error("Welcome email error:", welcomeError);
           }
-          
-          // Navigate after all operations are complete
-          navigate(from);
+        } else {
+          console.log("Existing user signed in:", session.user.email);
+          toast({
+            title: "Welcome back! 👋",
+            description: "You've successfully signed in.",
+          });
         }
+
+        navigate(from);
       }
     });
 
@@ -80,7 +75,7 @@ const Login = () => {
           {from === "/analytics" ? "Unlock Analytics Features!" : "Welcome Back!"}
         </h1>
         <p className="text-gray-600 text-center mb-6">
-          {from === "/analytics" 
+          {from === "/analytics"
             ? "Sign in to access detailed analytics and track your content performance"
             : "Sign in to save your recordings and access analytics"}
         </p>
@@ -105,12 +100,13 @@ const Login = () => {
             <p className="text-sm">Get insights on your best performing content</p>
           </div>
         </div>
-        
+
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
           theme="light"
           providers={[]}
+          redirectTo="https://www.vocero.ai/auth/callback"
         />
       </div>
     </div>
