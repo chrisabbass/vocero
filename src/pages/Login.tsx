@@ -33,18 +33,6 @@ const Login = () => {
               title: "Welcome to Vocero! 🎉",
               description: "Your account has been created successfully.",
             });
-
-            // Send welcome email for new users
-            const { error: welcomeError } = await supabase.functions.invoke(
-              "welcome-email",
-              {
-                body: { email: session.user.email },
-              }
-            );
-
-            if (welcomeError) {
-              console.error("Welcome email error:", welcomeError);
-            }
           } else {
             console.log("Existing user signed in:", session.user.email);
             toast({
