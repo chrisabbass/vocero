@@ -32,31 +32,20 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     stopRecording,
     cancelRecording,
     generateVariations,
-    resetRecorder,
   } = useVoiceRecorderInit();
 
   const handleLogoClick = () => {
-    console.log('Logo clicked - resetting all states');
-    // Reset all states
+    console.log('Logo clicked - resetting states without regeneration');
     setVariations([]);
     setSelectedVariation('');
     setIsGenerating(false);
     setTranscript('');
-    setProcessingTranscript('');
+    // Don't reset processingTranscript to prevent regeneration
     setPersonality('friendly');
-    // Reset the recorder state
-    resetRecorder();
   };
 
   const handleTranscriptGenerated = async (newTranscript: string) => {
     console.log('New transcript generated:', newTranscript);
-    
-    // Don't proceed if transcript is empty
-    if (!newTranscript.trim()) {
-      console.log('Empty transcript received, skipping variation generation');
-      return;
-    }
-    
     if (newTranscript === processingTranscript) {
       console.log('This transcript is already being processed');
       return;

@@ -65,18 +65,6 @@ export const useVoiceRecorder = () => {
         const audioBlob = new Blob(audioChunks.current, { type: mimeType });
         console.log('Audio blob created, size:', audioBlob.size, 'type:', audioBlob.type);
         
-        // Check if there's actual audio content
-        if (audioBlob.size <= 1024) { // If audio is less than 1KB, it's likely empty
-          console.log('No audio content detected');
-          toast({
-            title: "No audio detected",
-            description: "Please speak into your microphone when recording.",
-            variant: "destructive",
-          });
-          setTranscript('');
-          return;
-        }
-        
         try {
           const formData = new FormData();
           // Ensure we send with a proper extension that matches the MIME type
@@ -110,7 +98,6 @@ export const useVoiceRecorder = () => {
             description: error instanceof Error ? error.message : "Failed to transcribe audio",
             variant: "destructive",
           });
-          setTranscript('');
         }
       };
 
