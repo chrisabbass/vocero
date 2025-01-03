@@ -18,9 +18,7 @@ const Login = () => {
 
   useEffect(() => {
     console.log("Setting up auth state change listener");
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.email);
 
       if (event === "SIGNED_IN" && session?.user) {
