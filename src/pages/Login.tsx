@@ -4,7 +4,7 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const location = useLocation();
@@ -29,8 +29,9 @@ const Login = () => {
             
             if (response.error) {
               console.error('Error sending welcome email:', response.error);
+              // Still show welcome toast but without email reference
               toast({
-                title: "Welcome!",
+                title: "Welcome to Vocero! 🎉",
                 description: "Your account has been created successfully.",
               });
             } else {
@@ -42,15 +43,22 @@ const Login = () => {
             }
           } catch (error) {
             console.error('Error invoking welcome-email function:', error);
+            // Show welcome toast without email reference
+            toast({
+              title: "Welcome to Vocero! 🎉",
+              description: "Your account has been created successfully.",
+            });
           }
         }
+        // Redirect after successful sign in
+        navigate(from);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [toast, navigate, from]);
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
