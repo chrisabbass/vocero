@@ -1,17 +1,56 @@
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const from = location.state?.from || "/";
+  const { toast } = useToast();
 
   const handleBackToHome = () => {
     navigate("/");
   };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        // Check if this is a new registration
+        if (session?.user.created_at === session?.user.last_sign_in_at) {
+          console.log('New user registered, sending welcome email');
+          try {
+            const response = await supabase.functions.invoke('welcome-email', {
+              body: { email: session.user.email }
+            });
+            
+            if (response.error) {
+              console.error('Error sending welcome email:', response.error);
+              toast({
+                title: "Welcome!",
+                description: "Your account has been created successfully.",
+              });
+            } else {
+              console.log('Welcome email sent successfully');
+              toast({
+                title: "Welcome to Vocero! 🎉",
+                description: "Check your email for getting started instructions.",
+              });
+            }
+          } catch (error) {
+            console.error('Error invoking welcome-email function:', error);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
