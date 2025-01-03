@@ -28,7 +28,7 @@ const Login = () => {
       const response = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: 'https://www.vocero.ai/auth/callback'
+          emailRedirectTo: window.location.origin + '/auth/callback'
         }
       });
 
