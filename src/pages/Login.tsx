@@ -44,7 +44,7 @@ const Login = () => {
         console.error("Supabase auth error:", {
           code: error.status,
           message: error.message,
-          details: error.details,
+          name: error.name,
         });
         throw error;
       }
@@ -70,7 +70,6 @@ const Login = () => {
         message: error?.message,
         name: error?.name,
         status: error?.status,
-        details: error?.details,
         timestamp: new Date().toISOString(),
       });
 
