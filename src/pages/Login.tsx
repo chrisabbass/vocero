@@ -22,27 +22,39 @@ const Login = () => {
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    console.log("Attempting to send magic link to:", email);
     
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: 'https://www.vocero.ai/auth/callback'
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
-      if (error) throw error;
+      console.log("Magic link response:", { data, error });
+
+      if (error) {
+        console.error("Magic link error:", error);
+        throw error;
+      }
 
       toast({
         title: "Magic link sent! 🪄",
         description: "Check your email for the login link.",
+        duration: 5000, // Show for 5 seconds
       });
-    } catch (error) {
+      
+      // Clear the email input after successful send
+      setEmail("");
+      
+    } catch (error: any) {
       console.error("Error sending magic link:", error);
       toast({
         title: "Error",
-        description: "Failed to send magic link. Please try again.",
+        description: error.message || "Failed to send magic link. Please try again.",
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setLoading(false);
