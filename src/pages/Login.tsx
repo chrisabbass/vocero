@@ -1,19 +1,52 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const from = location.state?.from || "/";
   const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleBackToHome = () => {
     navigate("/");
+  };
+
+  const handleMagicLinkLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: 'https://www.vocero.ai/auth/callback'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Magic link sent! 🪄",
+        description: "Check your email for the login link.",
+      });
+    } catch (error) {
+      console.error("Error sending magic link:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send magic link. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -97,13 +130,26 @@ const Login = () => {
           </div>
         </div>
 
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          theme="light"
-          providers={[]}
-          redirectTo="https://www.vocero.ai/auth/callback"
-        />
+        <form onSubmit={handleMagicLinkLogin} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? "Sending magic link..." : "Send magic link"}
+          </Button>
+        </form>
       </div>
     </div>
   );
