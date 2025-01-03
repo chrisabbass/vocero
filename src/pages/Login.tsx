@@ -28,7 +28,7 @@ const Login = () => {
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: 'https://www.vocero.ai/auth/callback'
         }
       });
 
@@ -42,10 +42,9 @@ const Login = () => {
       toast({
         title: "Magic link sent! 🪄",
         description: "Check your email for the login link.",
-        duration: 5000, // Show for 5 seconds
+        duration: 5000,
       });
       
-      // Clear the email input after successful send
       setEmail("");
       
     } catch (error: any) {
