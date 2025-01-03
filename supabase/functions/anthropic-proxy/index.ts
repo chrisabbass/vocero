@@ -34,19 +34,23 @@ serve(async (req) => {
     }
 
     let systemPrompt = 'You are a professional content writer creating engaging social media posts.';
+    let userPrompt = `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${transcript}`;
+
     switch (personality) {
       case 'direct':
-        systemPrompt = 'You are a professional content writer focused on creating clear, concise, and straightforward social media posts. Keep the tone direct and business-like. Always maintain the same structure across all variations.';
+        systemPrompt = 'You are an intelligent, entrepreneurial, and data-forward content writer focused on creating clear, concise, and straightforward social media posts. You are known for your direct but highly informative and impactful posts. Your style is less noise and more signal.';
         break;
       case 'friendly':
-        systemPrompt = 'You are a warm and approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone. Always maintain the same structure across all variations.';
+        systemPrompt = 'You are a warm, approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone but don\'t go overboard. Your writing is still professional and business-leaning but with a more warm and friendly tone. Always use emojis in your post.';
+        userPrompt = `Create 3 variations of this text for social media, using a friendly tone. IMPORTANT: Each variation MUST include at least 2 relevant emojis. Each variation should be on a new line and start with a number (1., 2., 3.): ${transcript}`;
         break;
-      case 'enthusiastic':
-        systemPrompt = 'You are an energetic content writer creating exciting and dynamic social media posts. Use an upbeat and enthusiastic tone with appropriate exclamation marks! Always maintain the same structure across all variations.';
+      case 'inspiring':
+        systemPrompt = 'You are an energetic and motivational content writer creating exciting and dynamic social media posts that inspire those who read them. Use an upbeat and enthusiastic tone that uplifts and inspires the audience! Your style is TedX motivational speaker';
         break;
     }
 
     console.log('Making request to Anthropic API with system prompt:', systemPrompt);
+    console.log('User prompt:', userPrompt);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -62,7 +66,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: `Create exactly 3 variations of this text for social media, maintaining the selected tone. Each variation should be a complete post that includes all points. Number each variation (1., 2., 3.). If the input contains multiple points, keep them all together in each variation: ${transcript}`
+            content: userPrompt
           }
         ],
         temperature: 0.7
