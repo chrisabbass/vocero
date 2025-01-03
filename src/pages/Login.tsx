@@ -21,50 +21,63 @@ const Login = () => {
 
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (loading) return; // Prevent multiple submissions
-    
+    if (loading) return;
+
     setLoading(true);
-    console.log("Starting magic link login for:", email);
+    console.log("Login attempt started for:", email);
 
     try {
-      // Create the sign-in request
-      const signInResponse = await supabase.auth.signInWithOtp({
+      // First, log the redirect URL we're using
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log("Using redirect URL:", redirectUrl);
+
+      const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: redirectUrl,
           shouldCreateUser: true,
-        }
+        },
       });
 
-      // Log the complete response for debugging
-      console.log("Complete sign-in response:", JSON.stringify(signInResponse, null, 2));
-
-      // Check for errors in the response
-      if (signInResponse.error) {
-        throw new Error(signInResponse.error.message);
+      // Immediately check for error
+      if (error) {
+        console.error("Supabase auth error:", {
+          code: error.status,
+          message: error.message,
+          details: error.details,
+        });
+        throw error;
       }
 
-      // Success case
+      // Log successful response
+      console.log("Magic link request successful:", {
+        data,
+        email,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Clear email and show success message
+      setEmail("");
       toast({
         title: "Magic link sent! 🪄",
         description: "Check your email for the login link.",
         duration: 5000,
       });
-      
-      setEmail("");
-      
     } catch (error: any) {
-      console.error("Login error details:", {
+      // Detailed error logging
+      console.error("Login error:", {
         error,
-        message: error.message,
-        name: error.name,
-        stack: error.stack
+        message: error?.message,
+        name: error?.name,
+        status: error?.status,
+        details: error?.details,
+        timestamp: new Date().toISOString(),
       });
-      
+
+      // Show user-friendly error message
       toast({
-        title: "Error",
-        description: "There was a problem sending the magic link. Please try again.",
+        title: "Login Error",
+        description: error?.message || "There was a problem sending the magic link. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
@@ -74,25 +87,24 @@ const Login = () => {
   };
 
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session);
+      console.log("Auth state change detected:", {
+        event,
+        email: session?.user?.email,
+        timestamp: new Date().toISOString(),
+      });
 
       if (event === "SIGNED_IN" && session) {
-        console.log("User signed in successfully:", session.user.email);
-        
         const isNewUser = session.user.created_at === session.user.last_sign_in_at;
         
-        if (isNewUser) {
-          toast({
-            title: "Welcome to Vocero! 🎉",
-            description: "Your account has been created successfully.",
-          });
-        } else {
-          toast({
-            title: "Welcome back! 👋",
-            description: "You've successfully signed in.",
-          });
-        }
+        toast({
+          title: isNewUser ? "Welcome to Vocero! 🎉" : "Welcome back! 👋",
+          description: isNewUser 
+            ? "Your account has been created successfully."
+            : "You've successfully signed in.",
+        });
 
         navigate(from);
       }
@@ -155,6 +167,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              className="w-full"
             />
           </div>
           <Button 
