@@ -25,7 +25,6 @@ const Login = () => {
     console.log("Attempting to send magic link to:", email);
     
     try {
-      // Solution 1: Store the response
       const response = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -33,7 +32,6 @@ const Login = () => {
         }
       });
 
-      // Solution 3: Read once and handle
       console.log("Magic link response:", response);
 
       if (response.error) {
