@@ -25,20 +25,20 @@ const Login = () => {
     console.log("Attempting to send magic link to:", email);
     
     try {
-      const { data, error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: 'https://www.vocero.ai/auth/callback'
         }
       });
 
-      console.log("Magic link response:", { data, error });
-
       if (error) {
         console.error("Magic link error:", error);
         throw error;
       }
 
+      console.log("Magic link sent successfully");
+      
       toast({
         title: "Magic link sent! 🪄",
         description: "Check your email for the login link.",
