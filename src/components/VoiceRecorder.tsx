@@ -40,12 +40,19 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
     setSelectedVariation('');
     setIsGenerating(false);
     setTranscript('');
-    // Don't reset processingTranscript to prevent regeneration
+    setProcessingTranscript('');
     setPersonality('friendly');
   };
 
   const handleTranscriptGenerated = async (newTranscript: string) => {
     console.log('New transcript generated:', newTranscript);
+    
+    // Don't proceed if transcript is empty
+    if (!newTranscript.trim()) {
+      console.log('Empty transcript received, skipping variation generation');
+      return;
+    }
+    
     if (newTranscript === processingTranscript) {
       console.log('This transcript is already being processed');
       return;
