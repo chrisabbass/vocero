@@ -17,41 +17,46 @@ const Login = () => {
   };
 
   useEffect(() => {
+    // Single subscription to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      
       if (event === 'SIGNED_IN') {
-        // Check if this is a new registration
-        if (session?.user.created_at === session?.user.last_sign_in_at) {
-          console.log('New user registered, sending welcome email');
-          try {
-            const response = await supabase.functions.invoke('welcome-email', {
-              body: { email: session.user.email }
-            });
-            
-            if (response.error) {
-              console.error('Error sending welcome email:', response.error);
-              // Still show welcome toast but without email reference
-              toast({
-                title: "Welcome to Vocero! 🎉",
-                description: "Your account has been created successfully.",
-              });
-            } else {
-              console.log('Welcome email sent successfully');
-              toast({
-                title: "Welcome to Vocero! 🎉",
-                description: "Check your email for getting started instructions.",
-              });
-            }
-          } catch (error) {
-            console.error('Error invoking welcome-email function:', error);
-            // Show welcome toast without email reference
+        if (session?.user) {
+          const isNewUser = session.user.created_at === session.user.last_sign_in_at;
+          
+          if (isNewUser) {
+            console.log('New user signed up:', session.user.email);
             toast({
               title: "Welcome to Vocero! 🎉",
               description: "Your account has been created successfully.",
             });
+            
+            try {
+              // Only attempt to send welcome email for new users
+              const { error: welcomeError } = await supabase.functions.invoke('welcome-email', {
+                body: { email: session.user.email }
+              });
+              
+              if (welcomeError) {
+                console.error('Welcome email error:', welcomeError);
+              } else {
+                console.log('Welcome email sent successfully');
+              }
+            } catch (error) {
+              console.error('Failed to send welcome email:', error);
+            }
+          } else {
+            console.log('Existing user signed in:', session.user.email);
+            toast({
+              title: "Welcome back! 👋",
+              description: "You've successfully signed in.",
+            });
           }
+          
+          // Navigate after all operations are complete
+          navigate(from);
         }
-        // Redirect after successful sign in
-        navigate(from);
       }
     });
 
