@@ -25,17 +25,17 @@ const Login = () => {
     console.log("Attempting to send magic link to:", email);
     
     try {
-      const response = await supabase.auth.signInWithOtp({
+      const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: window.location.origin + '/auth/callback'
         }
       });
 
-      console.log("Magic link response:", response);
+      console.log("Magic link response:", { data, error });
 
-      if (response.error) {
-        throw response.error;
+      if (error) {
+        throw error;
       }
 
       toast({
@@ -48,9 +48,13 @@ const Login = () => {
       
     } catch (error: any) {
       console.error("Error sending magic link:", error);
+      
+      // More specific error message based on the error type
+      const errorMessage = error.message || "Failed to send magic link. Please try again.";
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to send magic link. Please try again.",
+        description: errorMessage,
         variant: "destructive",
         duration: 5000,
       });
