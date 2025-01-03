@@ -17,41 +17,51 @@ const Login = () => {
   };
 
   useEffect(() => {
+    console.log("Setting up auth state change listener");
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.email);
 
       if (event === "SIGNED_IN" && session?.user) {
-        const isNewUser = session.user.created_at === session.user.last_sign_in_at;
-        
-        if (isNewUser) {
-          console.log("New user signed up:", session.user.email);
-          toast({
-            title: "Welcome to Vocero! 🎉",
-            description: "Your account has been created successfully.",
-          });
+        try {
+          const isNewUser = session.user.created_at === session.user.last_sign_in_at;
+          
+          if (isNewUser) {
+            console.log("New user signed up:", session.user.email);
+            toast({
+              title: "Welcome to Vocero! 🎉",
+              description: "Your account has been created successfully.",
+            });
 
-          // Send welcome email for new users
-          const { error: welcomeError } = await supabase.functions.invoke(
-            "welcome-email",
-            {
-              body: { email: session.user.email },
+            // Send welcome email for new users
+            const { error: welcomeError } = await supabase.functions.invoke(
+              "welcome-email",
+              {
+                body: { email: session.user.email },
+              }
+            );
+
+            if (welcomeError) {
+              console.error("Welcome email error:", welcomeError);
             }
-          );
-
-          if (welcomeError) {
-            console.error("Welcome email error:", welcomeError);
+          } else {
+            console.log("Existing user signed in:", session.user.email);
+            toast({
+              title: "Welcome back! 👋",
+              description: "You've successfully signed in.",
+            });
           }
-        } else {
-          console.log("Existing user signed in:", session.user.email);
+
+          navigate(from);
+        } catch (error) {
+          console.error("Error during sign in process:", error);
           toast({
-            title: "Welcome back! 👋",
-            description: "You've successfully signed in.",
+            title: "Error",
+            description: "There was an error during the sign in process. Please try again.",
+            variant: "destructive",
           });
         }
-
-        navigate(from);
       }
     });
 
