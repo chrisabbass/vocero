@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LinkedIn } from "lucide-react";
+import { Linkedin } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export const LinkedInConnect = () => {
@@ -48,8 +48,8 @@ export const LinkedInConnect = () => {
       // Redirect to LinkedIn OAuth
       const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
       linkedinUrl.searchParams.append('response_type', 'code');
-      linkedinUrl.searchParams.append('client_id', 'YOUR_CLIENT_ID'); // Replace with your client ID
-      linkedinUrl.searchParams.append('redirect_uri', `${window.location.origin}/api/linkedin-callback`);
+      linkedinUrl.searchParams.append('client_id', process.env.LINKEDIN_CLIENT_ID || '');
+      linkedinUrl.searchParams.append('redirect_uri', `${window.location.origin}/functions/v1/linkedin-oauth`);
       linkedinUrl.searchParams.append('state', user.id);
       linkedinUrl.searchParams.append('scope', 'w_member_social');
 
@@ -75,7 +75,7 @@ export const LinkedInConnect = () => {
         onClick={handleConnect}
         className="flex items-center gap-2"
       >
-        <LinkedIn className="h-4 w-4" />
+        <Linkedin className="h-4 w-4" />
         {isConnected ? "Connected to LinkedIn" : "Connect LinkedIn"}
       </Button>
     </div>
