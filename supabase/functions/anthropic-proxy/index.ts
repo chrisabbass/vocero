@@ -6,6 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function retryWithBackoff(fn: () => Promise<any>, maxRetries = 3, initialDelay = 1000) {
+  let retries = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      retries++;
+      if (retries >= maxRetries) throw error;
+      
+      // If it's a rate limit error, wait longer
+      const isRateLimit = error.message?.includes('rate_limit_error');
+      const delay = isRateLimit ? initialDelay * Math.pow(2, retries) : initialDelay;
+      
+      console.log(`Retry ${retries}/${maxRetries} after ${delay}ms delay`);
+      await sleep(delay);
+    }
+  }
+}
+
 serve(async (req) => {
   console.log('Anthropic proxy function called');
   
@@ -49,34 +70,39 @@ serve(async (req) => {
 
     console.log('Using system prompt:', systemPrompt);
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: `Create exactly 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.). Here's the text: ${transcript}`
-          }
-        ],
-        temperature: 0.7
-      })
-    });
+    const generateVariations = async () => {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-sonnet-20240229',
+          max_tokens: 500, // Reduced from 1024 to help with rate limiting
+          system: systemPrompt,
+          messages: [
+            {
+              role: 'user',
+              content: `Create exactly 3 short but impactful variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.). Keep each variation under 280 characters. Here's the text: ${transcript}`
+            }
+          ],
+          temperature: 0.7
+        })
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Anthropic API error:', response.status, errorText);
-      throw new Error(`Anthropic API error: ${response.status} ${errorText}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Anthropic API error:', response.status, errorText);
+        throw new Error(`Anthropic API error: ${response.status} ${errorText}`);
+      }
 
-    const data = await response.json();
+      return response.json();
+    };
+
+    // Use retry logic for the API call
+    const data = await retryWithBackoff(generateVariations);
     console.log('Received response from Anthropic:', data);
 
     // Extract exactly 3 variations from the response
@@ -102,13 +128,21 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in anthropic-proxy function:', error);
+    
+    // Determine if it's a rate limit error
+    const isRateLimit = error.message?.includes('rate_limit_error');
+    const statusCode = isRateLimit ? 429 : 500;
+    const errorMessage = isRateLimit 
+      ? 'Rate limit exceeded. Please try again in a few moments.'
+      : 'Failed to generate variations. Please try again.';
+
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: errorMessage,
         details: error.stack 
       }), 
       { 
-        status: 500,
+        status: statusCode,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
