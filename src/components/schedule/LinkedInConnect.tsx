@@ -16,7 +16,11 @@ export const LinkedInConnect = () => {
   const checkLinkedInConnection = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log('No authenticated user found');
+        setIsLoading(false);
+        return;
+      }
 
       console.log('Checking LinkedIn connection for user:', user.id);
       const { data: tokens, error } = await supabase
