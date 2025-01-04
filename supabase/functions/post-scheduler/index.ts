@@ -48,24 +48,9 @@ async function getLinkedInAccessToken(code: string) {
 
 async function postToLinkedIn(content: string, accessToken: string) {
   try {
-    // First, get the user's LinkedIn profile to get their URN
-    const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!profileResponse.ok) {
-      throw new Error(`LinkedIn API error: ${profileResponse.statusText}`);
-    }
-
-    const profile = await profileResponse.json();
-    const authorUrn = profile.id;
-
-    // Create the post
+    // Create the post without fetching profile first
     const postData = {
-      author: `urn:li:person:${authorUrn}`,
+      author: `urn:li:person:${accessToken.split(':').pop()}`, // Extract member ID from token
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
@@ -85,11 +70,14 @@ async function postToLinkedIn(content: string, accessToken: string) {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0', // Required for LinkedIn API v2
       },
       body: JSON.stringify(postData),
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('LinkedIn API error details:', errorData);
       throw new Error(`LinkedIn API error: ${response.statusText}`);
     }
 
@@ -115,8 +103,6 @@ async function processScheduledPosts() {
   for (const post of posts) {
     try {
       if (post.platform === 'linkedin') {
-        // Here we'll need to get the user's LinkedIn access token from our database
-        // This will be implemented once we have the OAuth flow set up
         const { data: userToken, error: tokenError } = await supabase
           .from('user_social_tokens')
           .select('access_token')
