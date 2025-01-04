@@ -72,16 +72,15 @@ const Navigation = () => {
                 <span>Home</span>
               </Link>
               <Link
-                to="/analytics"
-                onClick={handleAnalyticsClick}
+                to="/inspo"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-                  location.pathname === '/analytics'
+                  location.pathname === '/inspo'
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-muted'
                 }`}
               >
-                <BarChart3 className="h-4 w-4" />
-                <span>Analytics</span>
+                <Lightbulb className="h-4 w-4" />
+                <span>Inspo</span>
               </Link>
               {isAuthenticated && (
                 <Link
@@ -97,15 +96,16 @@ const Navigation = () => {
                 </Link>
               )}
               <Link
-                to="/inspo"
+                to="/analytics"
+                onClick={handleAnalyticsClick}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-                  location.pathname === '/inspo'
+                  location.pathname === '/analytics'
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-muted'
                 }`}
               >
-                <Lightbulb className="h-4 w-4" />
-                <span>Inspo</span>
+                <BarChart3 className="h-4 w-4" />
+                <span>Analytics</span>
               </Link>
             </div>
             {isAuthenticated ? (
