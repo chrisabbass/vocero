@@ -20,19 +20,15 @@ const Schedule = () => {
     checkUser();
   }, []);
 
-  if (!user) {
-    return <div>Please log in to access this feature.</div>;
-  }
-
   // Fetch scheduled posts
   const { data: scheduledPosts, isLoading } = useQuery({
-    queryKey: ["scheduledPosts", user.id],
+    queryKey: ["scheduledPosts", user?.id],
     queryFn: async () => {
-      console.log("Fetching scheduled posts for user:", user.id);
+      console.log("Fetching scheduled posts for user:", user?.id);
       const { data, error } = await supabase
         .from("scheduled_posts")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", user?.id)
         .order("scheduled_for", { ascending: true });
 
       if (error) {
@@ -47,20 +43,20 @@ const Schedule = () => {
   // Create scheduled post mutation
   const createPost = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      console.log("Creating post for user:", user.id);
+      console.log("Creating post for user:", user?.id);
       const { error } = await supabase.from("scheduled_posts").insert([
         {
           content: values.content,
           platform: values.platform,
           scheduled_for: values.scheduledFor,
-          user_id: user.id,
+          user_id: user?.id,
         },
       ]);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scheduledPosts", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledPosts", user?.id] });
       toast({
         title: "Success",
         description: "Post scheduled successfully",
@@ -84,12 +80,12 @@ const Schedule = () => {
         .from("scheduled_posts")
         .delete()
         .eq("id", id)
-        .eq("user_id", user.id);
+        .eq("user_id", user?.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scheduledPosts", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledPosts", user?.id] });
       toast({
         title: "Success",
         description: "Post deleted successfully",
@@ -105,16 +101,16 @@ const Schedule = () => {
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    createPost.mutate(values);
-  };
+  if (!user) {
+    return <div>Please log in to access this feature.</div>;
+  }
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-8">Schedule Posts</h1>
       
       <ScheduleForm 
-        onSubmit={handleSubmit}
+        onSubmit={(values) => createPost.mutate(values)}
         isSubmitting={createPost.isPending}
       />
 
