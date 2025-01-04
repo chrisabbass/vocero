@@ -4,7 +4,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const LINKEDIN_CLIENT_ID = Deno.env.get('LINKEDIN_CLIENT_ID')?.trim();
 const LINKEDIN_CLIENT_SECRET = Deno.env.get('LINKEDIN_CLIENT_SECRET')?.trim();
-const LINKEDIN_ACCESS_TOKEN = Deno.env.get('LINKEDIN_ACCESS_TOKEN')?.trim();
+const LINKEDIN_REDIRECT_URI = Deno.env.get('LINKEDIN_REDIRECT_URI')?.trim();
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -13,43 +13,45 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function postToTwitter(content: string) {
-  // Using Twitter API v2
-  const url = 'https://api.twitter.com/2/tweets';
-  const oauth = generateOAuthHeader('POST', url);
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': oauth,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text: content }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Twitter API error: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error posting to Twitter:', error);
-    throw error;
-  }
-}
-
-async function postToLinkedIn(content: string) {
-  if (!LINKEDIN_ACCESS_TOKEN) {
+async function getLinkedInAccessToken(code: string) {
+  if (!LINKEDIN_CLIENT_ID || !LINKEDIN_CLIENT_SECRET || !LINKEDIN_REDIRECT_URI) {
     console.error('LinkedIn credentials not configured');
     throw new Error('LinkedIn credentials not configured');
   }
 
   try {
+    const response = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: LINKEDIN_CLIENT_ID,
+        client_secret: LINKEDIN_CLIENT_SECRET,
+        redirect_uri: LINKEDIN_REDIRECT_URI,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`LinkedIn OAuth error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error('Error getting LinkedIn access token:', error);
+    throw error;
+  }
+}
+
+async function postToLinkedIn(content: string, accessToken: string) {
+  try {
     // First, get the user's LinkedIn profile to get their URN
     const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
-        'Authorization': `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
     });
@@ -81,7 +83,7 @@ async function postToLinkedIn(content: string) {
     const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(postData),
@@ -112,10 +114,22 @@ async function processScheduledPosts() {
 
   for (const post of posts) {
     try {
-      if (post.platform === 'twitter') {
-        await postToTwitter(post.content);
-      } else if (post.platform === 'linkedin') {
-        await postToLinkedIn(post.content);
+      if (post.platform === 'linkedin') {
+        // Here we'll need to get the user's LinkedIn access token from our database
+        // This will be implemented once we have the OAuth flow set up
+        const { data: userToken, error: tokenError } = await supabase
+          .from('user_social_tokens')
+          .select('access_token')
+          .eq('user_id', post.user_id)
+          .eq('platform', 'linkedin')
+          .single();
+
+        if (tokenError || !userToken) {
+          console.error(`No LinkedIn token found for user ${post.user_id}`);
+          continue;
+        }
+
+        await postToLinkedIn(post.content, userToken.access_token);
       }
 
       // Mark post as posted
@@ -128,11 +142,6 @@ async function processScheduledPosts() {
       console.error(`Error processing post ${post.id}:`, error);
     }
   }
-}
-
-// Function to generate OAuth 1.0a signature for Twitter
-function generateOAuthHeader(method: string, url: string): string {
-  // Your implementation for generating OAuth header goes here
 }
 
 // Handle CORS preflight requests
