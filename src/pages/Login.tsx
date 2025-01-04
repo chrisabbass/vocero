@@ -15,13 +15,19 @@ const Login = () => {
   const from = location.state?.from || "/";
 
   useEffect(() => {
-    console.log('Setting up auth state listener');
+    console.log('Login page mounted, setting up auth listeners');
     
     // Check if user is already authenticated
     const checkAuth = async () => {
+      console.log('Checking initial auth state...');
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
         console.error('Error checking auth session:', error);
+        toast({
+          title: "Authentication Error",
+          description: "There was an error checking your authentication status.",
+          variant: "destructive",
+        });
         return;
       }
       if (session) {
@@ -43,6 +49,14 @@ const Login = () => {
           description: "You have successfully signed in.",
         });
         navigate(from);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      } else if (event === 'USER_UPDATED') {
+        console.log('User profile updated');
+      } else if (event === 'USER_DELETED') {
+        console.log('User account deleted');
+      } else if (event === 'PASSWORD_RECOVERY') {
+        console.log('Password recovery initiated');
       }
     });
 
@@ -89,6 +103,14 @@ const Login = () => {
           }}
           theme="light"
           providers={[]}
+          onError={(error) => {
+            console.error('Auth error:', error);
+            toast({
+              title: "Authentication Error",
+              description: error.message,
+              variant: "destructive",
+            });
+          }}
         />
 
         <PasswordValidation />
