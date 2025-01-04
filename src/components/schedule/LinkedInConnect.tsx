@@ -18,16 +18,28 @@ export const LinkedInConnect = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: tokens } = await supabase
+      console.log('Checking LinkedIn connection for user:', user.id);
+      const { data: tokens, error } = await supabase
         .from('user_social_tokens')
         .select('*')
         .eq('user_id', user.id)
         .eq('platform', 'linkedin')
-        .single();
+        .maybeSingle();
 
+      if (error) {
+        console.error('Error checking LinkedIn tokens:', error);
+        throw error;
+      }
+
+      console.log('LinkedIn connection status:', tokens ? 'Connected' : 'Not connected');
       setIsConnected(!!tokens);
     } catch (error) {
       console.error('Error checking LinkedIn connection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check LinkedIn connection status",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -45,6 +57,7 @@ export const LinkedInConnect = () => {
         return;
       }
 
+      console.log('Initiating LinkedIn OAuth flow for user:', user.id);
       // Redirect to LinkedIn OAuth
       const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
       linkedinUrl.searchParams.append('response_type', 'code');
