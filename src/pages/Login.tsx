@@ -97,10 +97,11 @@ const Login = () => {
           }}
           theme="light"
           providers={[]}
-          view="sign_in"
         />
 
-        <div id="password-validation-container"></div>
+        <div id="password-validation-container">
+          <PasswordValidation />
+        </div>
       </div>
     </div>
   );

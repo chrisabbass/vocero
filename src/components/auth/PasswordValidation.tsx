@@ -28,6 +28,7 @@ export const PasswordValidation: React.FC = () => {
           passwordInput.dataset.validationAttached = 'true';
           passwordInput.addEventListener('input', validatePassword);
           // Move validation requirements into the container
+          container.innerHTML = ''; // Clear any existing content
           container.appendChild(document.getElementById('password-requirements') || document.createElement('div'));
         }
       } else if (container) {
