@@ -48,7 +48,7 @@ export const LinkedInConnect = () => {
       // Redirect to LinkedIn OAuth
       const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
       linkedinUrl.searchParams.append('response_type', 'code');
-      linkedinUrl.searchParams.append('client_id', process.env.LINKEDIN_CLIENT_ID || '');
+      linkedinUrl.searchParams.append('client_id', '780umlz9pwq8w4');
       linkedinUrl.searchParams.append('redirect_uri', `${window.location.origin}/functions/v1/linkedin-oauth`);
       linkedinUrl.searchParams.append('state', user.id);
       linkedinUrl.searchParams.append('scope', 'w_member_social');
