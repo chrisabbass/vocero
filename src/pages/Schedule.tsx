@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -30,6 +30,15 @@ const Schedule = () => {
   const queryClient = useQueryClient();
   const [selectedPlatform, setSelectedPlatform] = useState("twitter");
 
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return <div>Please log in to access this feature.</div>;
+  }
+
   // Form definition
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,33 +51,41 @@ const Schedule = () => {
 
   // Fetch scheduled posts
   const { data: scheduledPosts, isLoading } = useQuery({
-    queryKey: ["scheduledPosts"],
+    queryKey: ["scheduledPosts", user.id],
     queryFn: async () => {
+      console.log("Fetching scheduled posts for user:", user.id);
       const { data, error } = await supabase
         .from("scheduled_posts")
         .select("*")
+        .eq("user_id", user.id)
         .order("scheduled_for", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching posts:", error);
+        throw error;
+      }
       return data;
     },
+    enabled: !!user,
   });
 
   // Create scheduled post mutation
   const createPost = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      console.log("Creating post for user:", user.id);
       const { error } = await supabase.from("scheduled_posts").insert([
         {
           content: values.content,
           platform: values.platform,
           scheduled_for: values.scheduledFor,
+          user_id: user.id,
         },
       ]);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledPosts", user.id] });
       toast({
         title: "Success",
         description: "Post scheduled successfully",
@@ -88,15 +105,17 @@ const Schedule = () => {
   // Delete scheduled post mutation
   const deletePost = useMutation({
     mutationFn: async (id: string) => {
+      console.log("Deleting post:", id);
       const { error } = await supabase
         .from("scheduled_posts")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledPosts", user.id] });
       toast({
         title: "Success",
         description: "Post deleted successfully",
