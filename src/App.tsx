@@ -12,6 +12,7 @@ const Index = lazy(() => import("./pages/Index"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Login = lazy(() => import("./pages/Login"));
 const Inspo = lazy(() => import("./pages/Inspo"));
+const Schedule = lazy(() => import("./pages/Schedule"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,7 +106,7 @@ const App = () => {
                 </>
               } />
               <Route path="/login" element={<Login />} />
-              {/* Analytics requires authentication */}
+              {/* Protected routes */}
               <Route path="/analytics" element={
                 <ProtectedRoute>
                   <>
@@ -114,7 +115,14 @@ const App = () => {
                   </>
                 </ProtectedRoute>
               } />
-              {/* New Inspo route */}
+              <Route path="/schedule" element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <Schedule />
+                  </>
+                </ProtectedRoute>
+              } />
               <Route path="/inspo" element={
                 <>
                   <Navigation />

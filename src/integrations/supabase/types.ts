@@ -146,6 +146,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_posts: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          platform: string
+          posted: boolean | null
+          scheduled_for: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          platform: string
+          posted?: boolean | null
+          scheduled_for: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          platform?: string
+          posted?: boolean | null
+          scheduled_for?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       secrets: {
         Row: {
           created_at: string | null
@@ -175,6 +208,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_scheduled_posts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_secret: {
         Args: {
           name: string

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, Home, LogOut, LogIn, Lightbulb } from 'lucide-react';
+import { BarChart3, Home, LogOut, LogIn, Lightbulb, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
@@ -83,6 +83,19 @@ const Navigation = () => {
                 <BarChart3 className="h-4 w-4" />
                 <span>Analytics</span>
               </Link>
+              {isAuthenticated && (
+                <Link
+                  to="/schedule"
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                    location.pathname === '/schedule'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-muted'
+                  }`}
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span>Schedule</span>
+                </Link>
+              )}
               <Link
                 to="/inspo"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
