@@ -51,12 +51,6 @@ const Login = () => {
         navigate(from);
       } else if (event === 'SIGNED_OUT') {
         console.log('User signed out');
-      } else if (event === 'USER_UPDATED') {
-        console.log('User profile updated');
-      } else if (event === 'USER_DELETED') {
-        console.log('User account deleted');
-      } else if (event === 'PASSWORD_RECOVERY') {
-        console.log('Password recovery initiated');
       }
     });
 
@@ -103,14 +97,6 @@ const Login = () => {
           }}
           theme="light"
           providers={[]}
-          onError={(error) => {
-            console.error('Auth error:', error);
-            toast({
-              title: "Authentication Error",
-              description: error.message,
-              variant: "destructive",
-            });
-          }}
         />
 
         <PasswordValidation />
