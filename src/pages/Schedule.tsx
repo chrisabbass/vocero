@@ -1,53 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { ScheduleForm } from "@/components/schedule/ScheduleForm";
+import { ScheduledPostsList } from "@/components/schedule/ScheduledPostsList";
 import * as z from "zod";
-
-// Define the form schema
-const formSchema = z.object({
-  content: z.string().min(1, "Content is required"),
-  platform: z.enum(["twitter", "linkedin"]),
-  scheduledFor: z.string().min(1, "Schedule time is required"),
-});
 
 const Schedule = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedPlatform, setSelectedPlatform] = useState("twitter");
+  const [user, setUser] = useState<any>(null);
 
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      setUser(currentUser);
+    };
+    
+    checkUser();
+  }, []);
 
   if (!user) {
     return <div>Please log in to access this feature.</div>;
   }
-
-  // Form definition
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      content: "",
-      platform: "twitter",
-      scheduledFor: new Date().toISOString(),
-    },
-  });
 
   // Fetch scheduled posts
   const { data: scheduledPosts, isLoading } = useQuery({
@@ -90,7 +65,6 @@ const Schedule = () => {
         title: "Success",
         description: "Post scheduled successfully",
       });
-      form.reset();
     },
     onError: (error) => {
       console.error("Error scheduling post:", error);
@@ -131,121 +105,27 @@ const Schedule = () => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = (values: z.infer<typeof formSchema>) => {
     createPost.mutate(values);
   };
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-8">Schedule Posts</h1>
+      
+      <ScheduleForm 
+        onSubmit={handleSubmit}
+        isSubmitting={createPost.isPending}
+      />
 
-      {/* Create post form */}
-      <div className="bg-card rounded-lg p-6 mb-8">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Post Content</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="What's on your mind?"
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="platform"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Platform</FormLabel>
-                  <FormControl>
-                    <select
-                      className="w-full p-2 border rounded"
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setSelectedPlatform(e.target.value);
-                      }}
-                    >
-                      <option value="twitter">Twitter</option>
-                      <option value="linkedin">LinkedIn</option>
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="scheduledFor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Schedule For</FormLabel>
-                  <FormControl>
-                    <input
-                      type="datetime-local"
-                      className="w-full p-2 border rounded"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" disabled={createPost.isPending}>
-              {createPost.isPending ? "Scheduling..." : "Schedule Post"}
-            </Button>
-          </form>
-        </Form>
-      </div>
-
-      {/* Scheduled posts list */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Scheduled Posts</h2>
-        {isLoading ? (
-          <p>Loading scheduled posts...</p>
-        ) : scheduledPosts?.length === 0 ? (
-          <p>No scheduled posts yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {scheduledPosts?.map((post) => (
-              <div
-                key={post.id}
-                className="bg-card rounded-lg p-4 flex justify-between items-start"
-              >
-                <div>
-                  <p className="font-medium">{post.content}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      {format(new Date(post.scheduled_for), "PPP 'at' p")}
-                    </span>
-                    <span className="capitalize">• {post.platform}</span>
-                  </div>
-                </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => deletePost.mutate(post.id)}
-                  disabled={deletePost.isPending}
-                >
-                  Delete
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
+        <ScheduledPostsList
+          posts={scheduledPosts}
+          isLoading={isLoading}
+          onDelete={(id) => deletePost.mutate(id)}
+          isDeleting={deletePost.isPending}
+        />
       </div>
     </div>
   );
