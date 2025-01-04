@@ -4,7 +4,9 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Check, X } from "lucide-react";
 
 const Login = () => {
   const location = useLocation();
@@ -46,14 +48,79 @@ const Login = () => {
       }
     });
 
+    // Add password validation listener
+    const passwordInput = document.querySelector('input[type="password"]');
+    if (passwordInput) {
+      passwordInput.addEventListener('input', validatePassword);
+    }
+
     checkAuth();
 
-    // Cleanup subscription
+    // Cleanup subscription and event listeners
     return () => {
       console.log('Cleaning up auth state listener');
       subscription.unsubscribe();
+      const passwordInput = document.querySelector('input[type="password"]');
+      if (passwordInput) {
+        passwordInput.removeEventListener('input', validatePassword);
+      }
     };
   }, [navigate, from, toast]);
+
+  const validatePassword = (event) => {
+    const password = event.target.value;
+    const requirements = document.getElementById('password-requirements');
+    
+    if (!requirements) {
+      const container = event.target.parentElement;
+      const newRequirements = document.createElement('div');
+      newRequirements.id = 'password-requirements';
+      newRequirements.className = 'mt-2';
+      container.appendChild(newRequirements);
+      
+      // Create validation alerts
+      const validations = [
+        { id: 'length', text: 'At least 8 characters' },
+        { id: 'uppercase', text: 'At least one uppercase letter' },
+        { id: 'lowercase', text: 'At least one lowercase letter' },
+        { id: 'number', text: 'At least one number' },
+        { id: 'special', text: 'At least one special character' }
+      ];
+
+      validations.forEach(validation => {
+        const alert = document.createElement('div');
+        alert.id = `validation-${validation.id}`;
+        alert.className = 'flex items-center space-x-2 text-sm mb-1';
+        alert.innerHTML = `
+          <span class="validation-icon w-4 h-4"></span>
+          <span>${validation.text}</span>
+        `;
+        newRequirements.appendChild(alert);
+      });
+    }
+
+    // Update validation status
+    const hasLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    updateValidationStatus('length', hasLength);
+    updateValidationStatus('uppercase', hasUppercase);
+    updateValidationStatus('lowercase', hasLowercase);
+    updateValidationStatus('number', hasNumber);
+    updateValidationStatus('special', hasSpecial);
+  };
+
+  const updateValidationStatus = (id, isValid) => {
+    const element = document.querySelector(`#validation-${id} .validation-icon`);
+    if (element) {
+      element.innerHTML = isValid 
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    }
+  };
 
   const handleBackToHome = () => {
     navigate("/");
