@@ -28,7 +28,7 @@ async function handleLinkedInCallback(code: string, userId: string) {
         code,
         client_id: LINKEDIN_CLIENT_ID,
         client_secret: LINKEDIN_CLIENT_SECRET,
-        redirect_uri: `${SUPABASE_URL}/functions/v1/linkedin-oauth`,
+        redirect_uri: 'https://vocero.lovable.app',
       }),
     });
 
