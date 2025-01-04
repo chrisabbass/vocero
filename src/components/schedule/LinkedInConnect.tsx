@@ -71,7 +71,7 @@ export const LinkedInConnect = () => {
       linkedinUrl.searchParams.append('client_id', '780umlz9pwq8w4');
       linkedinUrl.searchParams.append('redirect_uri', `${window.location.origin}/functions/v1/linkedin-oauth`);
       linkedinUrl.searchParams.append('state', user.id);
-      linkedinUrl.searchParams.append('scope', 'w_member_social r_liteprofile');
+      linkedinUrl.searchParams.append('scope', 'w_member_social');
 
       console.log('Redirecting to LinkedIn with URL:', linkedinUrl.toString());
       window.location.href = linkedinUrl.toString();
