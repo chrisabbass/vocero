@@ -97,17 +97,10 @@ const Login = () => {
           }}
           theme="light"
           providers={[]}
-          onAuthError={(error) => {
-            console.error('Auth error:', error);
-            toast({
-              title: "Authentication Error",
-              description: error.message || "An error occurred during authentication",
-              variant: "destructive",
-            });
-          }}
+          view="sign_in"
         />
 
-        <PasswordValidation />
+        <div id="password-validation-container"></div>
       </div>
     </div>
   );

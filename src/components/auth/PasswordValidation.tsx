@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface ValidationRequirement {
   id: string;
@@ -17,10 +17,22 @@ const validationRequirements: ValidationRequirement[] = [
 export const PasswordValidation: React.FC = () => {
   const setupPasswordValidation = () => {
     const observer = new MutationObserver((mutations) => {
-      const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement;
-      if (passwordInput && !passwordInput.dataset.validationAttached) {
-        passwordInput.dataset.validationAttached = 'true';
-        passwordInput.addEventListener('input', validatePassword);
+      // Check if we're on the sign-up view
+      const signUpForm = document.querySelector('form[data-supabase-auth-view="sign_up"]');
+      const container = document.getElementById('password-validation-container');
+      
+      if (signUpForm && container) {
+        // Only setup validation if we're on sign-up view
+        const passwordInput = signUpForm.querySelector('input[type="password"]') as HTMLInputElement;
+        if (passwordInput && !passwordInput.dataset.validationAttached) {
+          passwordInput.dataset.validationAttached = 'true';
+          passwordInput.addEventListener('input', validatePassword);
+          // Move validation requirements into the container
+          container.appendChild(document.getElementById('password-requirements') || document.createElement('div'));
+        }
+      } else if (container) {
+        // Clear validation if not on sign-up
+        container.innerHTML = '';
       }
     });
 
