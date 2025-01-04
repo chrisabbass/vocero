@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState, Suspense, lazy } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "./components/Navigation";
+import Footer from "./components/Footer";
 
 // Lazy load pages
 const Index = lazy(() => import("./pages/Index"));
@@ -13,6 +14,7 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const Login = lazy(() => import("./pages/Login"));
 const Inspo = lazy(() => import("./pages/Inspo"));
 const Schedule = lazy(() => import("./pages/Schedule"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,43 +96,56 @@ const App = () => {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              {/* Main route is public */}
-              <Route path="/" element={
-                <>
-                  <Navigation />
-                  <Index />
-                </>
-              } />
-              <Route path="/login" element={<Login />} />
-              {/* Protected routes */}
-              <Route path="/analytics" element={
-                <ProtectedRoute>
+          <div className="min-h-screen flex flex-col">
+            <Toaster />
+            <Sonner />
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                {/* Main route is public */}
+                <Route path="/" element={
                   <>
                     <Navigation />
-                    <Analytics />
+                    <Index />
+                    <Footer />
                   </>
-                </ProtectedRoute>
-              } />
-              <Route path="/schedule" element={
-                <ProtectedRoute>
+                } />
+                <Route path="/login" element={<Login />} />
+                <Route path="/privacy-policy" element={
                   <>
                     <Navigation />
-                    <Schedule />
+                    <PrivacyPolicy />
+                    <Footer />
                   </>
-                </ProtectedRoute>
-              } />
-              <Route path="/inspo" element={
-                <>
-                  <Navigation />
-                  <Inspo />
-                </>
-              } />
-            </Routes>
-          </Suspense>
+                } />
+                {/* Protected routes */}
+                <Route path="/analytics" element={
+                  <ProtectedRoute>
+                    <>
+                      <Navigation />
+                      <Analytics />
+                      <Footer />
+                    </>
+                  </ProtectedRoute>
+                } />
+                <Route path="/schedule" element={
+                  <ProtectedRoute>
+                    <>
+                      <Navigation />
+                      <Schedule />
+                      <Footer />
+                    </>
+                  </ProtectedRoute>
+                } />
+                <Route path="/inspo" element={
+                  <>
+                    <Navigation />
+                    <Inspo />
+                    <Footer />
+                  </>
+                } />
+              </Routes>
+            </Suspense>
+          </div>
         </TooltipProvider>
       </QueryClientProvider>
     </BrowserRouter>
