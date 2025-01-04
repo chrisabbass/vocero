@@ -11,6 +11,7 @@ import Navigation from "./components/Navigation";
 const Index = lazy(() => import("./pages/Index"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Login = lazy(() => import("./pages/Login"));
+const Inspo = lazy(() => import("./pages/Inspo"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,12 +71,10 @@ const App = () => {
   useEffect(() => {
     const checkSupabaseConnection = async () => {
       try {
-        // First check if we have an authenticated session
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Auth session check:', session ? 'Active session' : 'No session');
         
         if (session) {
-          // Only try to access profiles if we have an authenticated session
           const { data, error } = await supabase.from('profiles').select('*').limit(1);
           console.log('Supabase connection test:', error ? 'Failed' : 'Successful');
           if (error) console.error('Supabase connection error:', error);
@@ -114,6 +113,13 @@ const App = () => {
                     <Analytics />
                   </>
                 </ProtectedRoute>
+              } />
+              {/* New Inspo route */}
+              <Route path="/inspo" element={
+                <>
+                  <Navigation />
+                  <Inspo />
+                </>
               } />
             </Routes>
           </Suspense>

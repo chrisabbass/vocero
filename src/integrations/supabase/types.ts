@@ -36,6 +36,35 @@ export type Database = {
         }
         Relationships: []
       }
+      categorized_posts: {
+        Row: {
+          category: Database["public"]["Enums"]["post_category"]
+          created_at: string | null
+          id: string
+          post_metrics_id: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["post_category"]
+          created_at?: string | null
+          id?: string
+          post_metrics_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["post_category"]
+          created_at?: string | null
+          id?: string
+          post_metrics_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorized_posts_post_metrics_id_fkey"
+            columns: ["post_metrics_id"]
+            isOneToOne: false
+            referencedRelation: "post_metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finnhub_webhooks: {
         Row: {
           id: string
@@ -154,7 +183,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      post_category: "business" | "culture" | "politics"
     }
     CompositeTypes: {
       [_ in never]: never
