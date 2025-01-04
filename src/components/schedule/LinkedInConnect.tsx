@@ -65,7 +65,7 @@ export const LinkedInConnect = () => {
       localStorage.setItem('linkedin_redirect', window.location.pathname);
 
       console.log('Initiating LinkedIn OAuth flow for user:', user.id);
-      // Redirect to LinkedIn OAuth
+      // Redirect to LinkedIn OAuth with only w_member_social scope
       const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
       linkedinUrl.searchParams.append('response_type', 'code');
       linkedinUrl.searchParams.append('client_id', '780umlz9pwq8w4');
