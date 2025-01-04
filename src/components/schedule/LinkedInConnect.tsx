@@ -65,12 +65,23 @@ export const LinkedInConnect = () => {
       localStorage.setItem('linkedin_redirect', window.location.pathname);
 
       console.log('Initiating LinkedIn OAuth flow for user:', user.id);
+      
+      // Get the anon key from the Supabase client
+      const anonKey = supabase.supabaseKey;
+      console.log('Using Supabase anon key:', anonKey ? 'Present' : 'Missing');
+
+      // Create state parameter with user ID and anon key
+      const stateParam = JSON.stringify({
+        userId: user.id,
+        key: anonKey
+      });
+
       // Redirect to LinkedIn OAuth with only w_member_social scope
       const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
       linkedinUrl.searchParams.append('response_type', 'code');
       linkedinUrl.searchParams.append('client_id', '780umlz9pwq8w4');
       linkedinUrl.searchParams.append('redirect_uri', 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback');
-      linkedinUrl.searchParams.append('state', user.id);
+      linkedinUrl.searchParams.append('state', stateParam);
       linkedinUrl.searchParams.append('scope', 'w_member_social');
 
       console.log('Redirecting to LinkedIn with URL:', linkedinUrl.toString());

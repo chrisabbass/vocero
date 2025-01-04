@@ -12,10 +12,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function handleLinkedInCallback(code: string, userId: string) {
+async function handleLinkedInCallback(code: string, stateParam: string) {
   try {
-    console.log('Handling LinkedIn callback for user:', userId);
-    console.log('Exchange code for access token...');
+    console.log('Handling LinkedIn callback with state:', stateParam);
+    
+    // Parse the state parameter
+    const state = JSON.parse(stateParam);
+    const userId = state.userId;
+    const anonKey = state.key;
+
+    console.log('Parsed user ID from state:', userId);
+    console.log('Anon key present:', !!anonKey);
     
     // Exchange code for access token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -41,8 +48,9 @@ async function handleLinkedInCallback(code: string, userId: string) {
     const tokenData = await tokenResponse.json();
     console.log('Successfully received access token');
 
-    // Store the token in the database
-    const { error: upsertError } = await supabase
+    // Store the token in the database using the anon key for authentication
+    const supabaseClient = createClient(SUPABASE_URL, anonKey);
+    const { error: upsertError } = await supabaseClient
       .from('user_social_tokens')
       .upsert({
         user_id: userId,
@@ -76,11 +84,16 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state'); // state contains userId
+    const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
     const error_description = url.searchParams.get('error_description');
 
-    console.log('Received OAuth callback with params:', { code: !!code, state, error, error_description });
+    console.log('Received OAuth callback with params:', { 
+      code: !!code, 
+      state: !!state, 
+      error, 
+      error_description 
+    });
 
     if (error || error_description) {
       console.error('LinkedIn OAuth error:', { error, error_description });
