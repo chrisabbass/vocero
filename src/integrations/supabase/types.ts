@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calculator_submissions: {
+        Row: {
+          calculation_data: Json
+          company: string
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          calculation_data: Json
+          company: string
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+        }
+        Update: {
+          calculation_data?: Json
+          company?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      finnhub_webhooks: {
+        Row: {
+          id: string
+          payload: Json
+          processed: boolean | null
+          received_at: string | null
+        }
+        Insert: {
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          received_at?: string | null
+        }
+        Update: {
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          received_at?: string | null
+        }
+        Relationships: []
+      }
       post_metrics: {
         Row: {
           comments: number | null
