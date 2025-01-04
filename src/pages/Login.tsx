@@ -97,6 +97,7 @@ const Login = () => {
           }}
           theme="light"
           providers={[]}
+          redirectTo={window.location.origin}
         />
 
         <div id="password-validation-container">
