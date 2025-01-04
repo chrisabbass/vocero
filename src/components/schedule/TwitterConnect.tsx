@@ -23,20 +23,11 @@ export const TwitterConnect = () => {
       }
 
       console.log('Checking Twitter connection for user:', user.id);
-      const { data: tokens, error } = await supabase
-        .from('user_social_tokens')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('platform', 'twitter')
-        .maybeSingle();
+      const { data: identities } = await supabase.auth.getUser();
+      const hasTwitter = identities.user?.app_metadata?.providers?.includes('twitter');
 
-      if (error) {
-        console.error('Error checking Twitter tokens:', error);
-        throw error;
-      }
-
-      console.log('Twitter connection status:', tokens ? 'Connected' : 'Not connected');
-      setIsConnected(!!tokens);
+      console.log('Twitter connection status:', hasTwitter ? 'Connected' : 'Not connected');
+      setIsConnected(!!hasTwitter);
     } catch (error) {
       console.error('Error checking Twitter connection:', error);
       toast({
@@ -61,28 +52,20 @@ export const TwitterConnect = () => {
         return;
       }
 
-      // Store the current URL to redirect back after OAuth
-      localStorage.setItem('twitter_redirect', window.location.pathname);
-
-      console.log('Initiating Twitter OAuth flow for user:', user.id);
-      
-      // Create state parameter with user ID
-      const stateParam = JSON.stringify({
-        userId: user.id
+      console.log('Initiating Twitter OAuth flow');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'twitter',
+        options: {
+          redirectTo: `${window.location.origin}/schedule`,
+          scopes: 'tweet.write tweet.read users.read offline.access',
+        }
       });
 
-      // Redirect to Twitter OAuth
-      const twitterUrl = new URL('https://twitter.com/i/oauth2/authorize');
-      twitterUrl.searchParams.append('response_type', 'code');
-      twitterUrl.searchParams.append('client_id', '780umlz9pwq8w4');
-      twitterUrl.searchParams.append('redirect_uri', 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback');
-      twitterUrl.searchParams.append('state', stateParam);
-      twitterUrl.searchParams.append('scope', 'tweet.write tweet.read users.read offline.access');
-      twitterUrl.searchParams.append('code_challenge', 'challenge');
-      twitterUrl.searchParams.append('code_challenge_method', 'plain');
+      if (error) {
+        throw error;
+      }
 
-      console.log('Redirecting to Twitter with URL:', twitterUrl.toString());
-      window.location.href = twitterUrl.toString();
+      console.log('Twitter OAuth initiated:', data);
     } catch (error) {
       console.error('Error connecting to Twitter:', error);
       toast({
