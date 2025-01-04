@@ -66,14 +66,9 @@ export const LinkedInConnect = () => {
 
       console.log('Initiating LinkedIn OAuth flow for user:', user.id);
       
-      // Get the anon key from the Supabase client
-      const anonKey = supabase.supabaseKey;
-      console.log('Using Supabase anon key:', anonKey ? 'Present' : 'Missing');
-
-      // Create state parameter with user ID and anon key
+      // Create state parameter with user ID
       const stateParam = JSON.stringify({
-        userId: user.id,
-        key: anonKey
+        userId: user.id
       });
 
       // Redirect to LinkedIn OAuth with only w_member_social scope

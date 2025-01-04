@@ -19,10 +19,8 @@ async function handleLinkedInCallback(code: string, stateParam: string) {
     // Parse the state parameter
     const state = JSON.parse(stateParam);
     const userId = state.userId;
-    const anonKey = state.key;
 
     console.log('Parsed user ID from state:', userId);
-    console.log('Anon key present:', !!anonKey);
     
     // Exchange code for access token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -48,9 +46,8 @@ async function handleLinkedInCallback(code: string, stateParam: string) {
     const tokenData = await tokenResponse.json();
     console.log('Successfully received access token');
 
-    // Store the token in the database using the anon key for authentication
-    const supabaseClient = createClient(SUPABASE_URL, anonKey);
-    const { error: upsertError } = await supabaseClient
+    // Store the token in the database using the service role key
+    const { error: upsertError } = await supabase
       .from('user_social_tokens')
       .upsert({
         user_id: userId,
