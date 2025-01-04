@@ -6,6 +6,13 @@ import { ScheduleForm } from "@/components/schedule/ScheduleForm";
 import { ScheduledPostsList } from "@/components/schedule/ScheduledPostsList";
 import * as z from "zod";
 
+// Define the form schema
+const formSchema = z.object({
+  content: z.string().min(1, "Content is required"),
+  platform: z.enum(["twitter", "linkedin"]),
+  scheduledFor: z.string().min(1, "Schedule time is required"),
+});
+
 const Schedule = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
