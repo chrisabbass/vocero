@@ -1,13 +1,47 @@
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const from = location.state?.from || "/";
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('User already authenticated, redirecting to:', from);
+        navigate(from);
+      }
+    };
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, 'Session:', session ? 'exists' : 'none');
+      if (event === 'SIGNED_IN' && session) {
+        console.log('User signed in, redirecting to:', from);
+        toast({
+          title: "Welcome!",
+          description: "You have successfully signed in.",
+        });
+        navigate(from);
+      }
+    });
+
+    checkAuth();
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, from, toast]);
 
   const handleBackToHome = () => {
     navigate("/");
@@ -56,9 +90,16 @@ const Login = () => {
         
         <Auth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
+          appearance={{ 
+            theme: ThemeSupa,
+            style: {
+              button: { background: 'rgb(147 51 234)', color: 'white' },
+              anchor: { color: 'rgb(147 51 234)' },
+            },
+          }}
           theme="light"
           providers={[]}
+          redirectTo={window.location.origin}
         />
       </div>
     </div>
