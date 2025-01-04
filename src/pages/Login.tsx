@@ -49,17 +49,63 @@ const Login = () => {
     });
 
     // Add password validation listener
-    const passwordInput = document.querySelector('input[type="password"]');
-    if (passwordInput) {
-      passwordInput.addEventListener('input', validatePassword);
-    }
+    const setupPasswordValidation = () => {
+      const observer = new MutationObserver((mutations) => {
+        const passwordInput = document.querySelector('input[type="password"]');
+        if (passwordInput && !passwordInput.dataset.validationAttached) {
+          passwordInput.dataset.validationAttached = 'true';
+          passwordInput.addEventListener('input', validatePassword);
+          
+          // Create validation container if it doesn't exist
+          if (!document.getElementById('password-requirements')) {
+            const container = passwordInput.parentElement;
+            const requirementsDiv = document.createElement('div');
+            requirementsDiv.id = 'password-requirements';
+            requirementsDiv.className = 'mt-2 space-y-1 text-sm';
+            
+            const validations = [
+              { id: 'length', text: 'At least 8 characters' },
+              { id: 'uppercase', text: 'At least one uppercase letter' },
+              { id: 'lowercase', text: 'At least one lowercase letter' },
+              { id: 'number', text: 'At least one number' },
+              { id: 'special', text: 'At least one special character' }
+            ];
 
-    checkAuth();
+            validations.forEach(validation => {
+              const requirement = document.createElement('div');
+              requirement.id = `validation-${validation.id}`;
+              requirement.className = 'flex items-center gap-2 text-muted-foreground';
+              requirement.innerHTML = `
+                <span class="validation-icon w-4 h-4 flex items-center justify-center">
+                  <X class="h-3 w-3 text-destructive" />
+                </span>
+                <span>${validation.text}</span>
+              `;
+              requirementsDiv.appendChild(requirement);
+            });
+
+            if (container) {
+              container.appendChild(requirementsDiv);
+            }
+          }
+        }
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+
+      return observer;
+    };
+
+    const observer = setupPasswordValidation();
 
     // Cleanup subscription and event listeners
     return () => {
       console.log('Cleaning up auth state listener');
       subscription.unsubscribe();
+      observer.disconnect();
       const passwordInput = document.querySelector('input[type="password"]');
       if (passwordInput) {
         passwordInput.removeEventListener('input', validatePassword);
@@ -67,59 +113,30 @@ const Login = () => {
     };
   }, [navigate, from, toast]);
 
-  const validatePassword = (event) => {
-    const password = event.target.value;
-    const requirements = document.getElementById('password-requirements');
+  const validatePassword = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const password = input.value;
     
-    if (!requirements) {
-      const container = event.target.parentElement;
-      const newRequirements = document.createElement('div');
-      newRequirements.id = 'password-requirements';
-      newRequirements.className = 'mt-2';
-      container.appendChild(newRequirements);
-      
-      // Create validation alerts
-      const validations = [
-        { id: 'length', text: 'At least 8 characters' },
-        { id: 'uppercase', text: 'At least one uppercase letter' },
-        { id: 'lowercase', text: 'At least one lowercase letter' },
-        { id: 'number', text: 'At least one number' },
-        { id: 'special', text: 'At least one special character' }
-      ];
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
 
-      validations.forEach(validation => {
-        const alert = document.createElement('div');
-        alert.id = `validation-${validation.id}`;
-        alert.className = 'flex items-center space-x-2 text-sm mb-1';
-        alert.innerHTML = `
-          <span class="validation-icon w-4 h-4"></span>
-          <span>${validation.text}</span>
-        `;
-        newRequirements.appendChild(alert);
-      });
-    }
-
-    // Update validation status
-    const hasLength = password.length >= 8;
-    const hasUppercase = /[A-Z]/.test(password);
-    const hasLowercase = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    updateValidationStatus('length', hasLength);
-    updateValidationStatus('uppercase', hasUppercase);
-    updateValidationStatus('lowercase', hasLowercase);
-    updateValidationStatus('number', hasNumber);
-    updateValidationStatus('special', hasSpecial);
-  };
-
-  const updateValidationStatus = (id, isValid) => {
-    const element = document.querySelector(`#validation-${id} .validation-icon`);
-    if (element) {
-      element.innerHTML = isValid 
-        ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-    }
+    Object.entries(requirements).forEach(([key, isValid]) => {
+      const element = document.querySelector(`#validation-${key}`);
+      if (element) {
+        element.className = `flex items-center gap-2 ${isValid ? 'text-green-500' : 'text-muted-foreground'}`;
+        const icon = element.querySelector('.validation-icon');
+        if (icon) {
+          icon.innerHTML = isValid 
+            ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        }
+      }
+    });
   };
 
   const handleBackToHome = () => {
