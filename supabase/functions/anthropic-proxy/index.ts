@@ -14,7 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body and log it for debugging
     const requestBody = await req.json();
     console.log('Received request body:', requestBody);
 
@@ -33,24 +32,22 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY is not set');
     }
 
-    let systemPrompt = 'You are a professional content writer creating engaging social media posts.';
-    let userPrompt = `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${transcript}`;
-
+    let systemPrompt = '';
     switch (personality) {
       case 'direct':
         systemPrompt = 'You are an intelligent, entrepreneurial, and data-forward content writer focused on creating clear, concise, and straightforward social media posts. You are known for your direct but highly informative and impactful posts. Your style is less noise and more signal.';
         break;
       case 'friendly':
-        systemPrompt = 'You are a warm, approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone but don\'t go overboard. Your writing is still professional and business-leaning but with a more warm and friendly tone. Always use emojis in your post.';
-        userPrompt = `Create 3 variations of this text for social media, using a friendly tone. IMPORTANT: Each variation MUST include at least 2 relevant emojis. Each variation should be on a new line and start with a number (1., 2., 3.): ${transcript}`;
+        systemPrompt = 'You are a warm, approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone but don\'t go overboard. Your writing is still professional and business-leaning but with a more warm and friendly tone. Always use 2-3 relevant emojis in each post.';
         break;
       case 'inspiring':
-        systemPrompt = 'You are an energetic and motivational content writer creating exciting and dynamic social media posts that inspire those who read them. Use an upbeat and enthusiastic tone that uplifts and inspires the audience! Your style is TedX motivational speaker';
+        systemPrompt = 'You are an energetic and motivational content writer creating exciting and dynamic social media posts that inspire those who read them. Use an upbeat and enthusiastic tone that uplifts and inspires the audience! Your style is TedX motivational speaker meets social media influencer.';
         break;
+      default:
+        systemPrompt = 'You are a professional content writer creating engaging social media posts with a balanced tone.';
     }
 
-    console.log('Making request to Anthropic API with system prompt:', systemPrompt);
-    console.log('User prompt:', userPrompt);
+    console.log('Using system prompt:', systemPrompt);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -66,7 +63,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: userPrompt
+            content: `Create exactly 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.). Here's the text: ${transcript}`
           }
         ],
         temperature: 0.7
@@ -82,7 +79,7 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Received response from Anthropic:', data);
 
-    // Extract variations from the response
+    // Extract exactly 3 variations from the response
     const content = data.content[0].text;
     const variations = content
       .split(/\d+\.\s+/)  // Split on numbered variations
@@ -92,8 +89,8 @@ serve(async (req) => {
 
     console.log('Extracted variations:', variations);
 
-    if (variations.length === 0) {
-      throw new Error('No variations were generated');
+    if (variations.length !== 3) {
+      throw new Error('Failed to generate exactly 3 variations');
     }
 
     return new Response(
