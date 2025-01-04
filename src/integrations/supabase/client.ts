@@ -9,7 +9,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    // Add the site URL to match your application URL
-    site_url: window.location.origin
+    redirectTo: window.location.origin
   }
 });
