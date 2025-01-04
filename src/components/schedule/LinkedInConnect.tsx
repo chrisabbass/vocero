@@ -61,6 +61,9 @@ export const LinkedInConnect = () => {
         return;
       }
 
+      // Store the current URL to redirect back after OAuth
+      localStorage.setItem('linkedin_redirect', window.location.pathname);
+
       console.log('Initiating LinkedIn OAuth flow for user:', user.id);
       // Redirect to LinkedIn OAuth
       const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
@@ -68,7 +71,7 @@ export const LinkedInConnect = () => {
       linkedinUrl.searchParams.append('client_id', '780umlz9pwq8w4');
       linkedinUrl.searchParams.append('redirect_uri', `${window.location.origin}/functions/v1/linkedin-oauth`);
       linkedinUrl.searchParams.append('state', user.id);
-      linkedinUrl.searchParams.append('scope', 'w_member_social');
+      linkedinUrl.searchParams.append('scope', 'w_member_social r_liteprofile');
 
       console.log('Redirecting to LinkedIn with URL:', linkedinUrl.toString());
       window.location.href = linkedinUrl.toString();

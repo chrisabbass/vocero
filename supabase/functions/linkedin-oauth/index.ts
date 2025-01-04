@@ -15,6 +15,7 @@ const corsHeaders = {
 async function handleLinkedInCallback(code: string, userId: string) {
   try {
     console.log('Handling LinkedIn callback for user:', userId);
+    console.log('Exchange code for access token...');
     
     // Exchange code for access token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -32,11 +33,13 @@ async function handleLinkedInCallback(code: string, userId: string) {
     });
 
     if (!tokenResponse.ok) {
-      throw new Error('Failed to get access token');
+      const errorText = await tokenResponse.text();
+      console.error('LinkedIn token exchange failed:', errorText);
+      throw new Error(`Failed to get access token: ${errorText}`);
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('Received access token');
+    console.log('Successfully received access token');
 
     // Store the token in the database
     const { error: upsertError } = await supabase
@@ -74,26 +77,45 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state'); // state contains userId
+    const error = url.searchParams.get('error');
+    const error_description = url.searchParams.get('error_description');
+
+    console.log('Received OAuth callback with params:', { code: !!code, state, error, error_description });
+
+    if (error || error_description) {
+      console.error('LinkedIn OAuth error:', { error, error_description });
+      return new Response(
+        JSON.stringify({ error: error_description || 'OAuth error' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     if (!code || !state) {
+      console.error('Missing required parameters:', { code: !!code, state: !!state });
       throw new Error('Missing code or state parameter');
     }
 
-    const result = await handleLinkedInCallback(code, state);
+    await handleLinkedInCallback(code, state);
     
     // Redirect to the frontend after successful OAuth
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': '/schedule', // Redirect to schedule page
+        'Location': '/schedule',
       },
     });
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error in OAuth callback:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
