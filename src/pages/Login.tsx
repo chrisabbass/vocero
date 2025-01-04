@@ -13,9 +13,15 @@ const Login = () => {
   const from = location.state?.from || "/";
 
   useEffect(() => {
+    console.log('Setting up auth state listener');
+    
     // Check if user is already authenticated
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error checking auth session:', error);
+        return;
+      }
       if (session) {
         console.log('User already authenticated, redirecting to:', from);
         navigate(from);
@@ -23,15 +29,20 @@ const Login = () => {
     };
 
     // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, 'Session:', session ? 'exists' : 'none');
+      
       if (event === 'SIGNED_IN' && session) {
-        console.log('User signed in, redirecting to:', from);
+        console.log('User signed in successfully, redirecting to:', from);
         toast({
           title: "Welcome!",
           description: "You have successfully signed in.",
         });
         navigate(from);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      } else if (event === 'USER_UPDATED') {
+        console.log('User updated');
       }
     });
 
@@ -39,6 +50,7 @@ const Login = () => {
 
     // Cleanup subscription
     return () => {
+      console.log('Cleaning up auth state listener');
       subscription.unsubscribe();
     };
   }, [navigate, from, toast]);
