@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getPersonalityPrompt } from "./personalityPrompts";
 
 export const generateVariations = async (text: string, personality: string = 'friendly'): Promise<string[]> => {
   try {
@@ -13,11 +14,19 @@ export const generateVariations = async (text: string, personality: string = 'fr
 
     console.log('Making request to Supabase Edge Function...');
     
+    const systemPrompt = getPersonalityPrompt(personality);
+    const userPrompt = `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${text}`;
+
     const { data, error } = await supabase.functions.invoke('anthropic-proxy', {
-      body: {
-        transcript: text,
-        personality: personality
-      }
+      body: JSON.stringify({
+        systemPrompt: systemPrompt,
+        messages: [
+          {
+            role: "user",
+            content: userPrompt
+          }
+        ]
+      })
     });
 
     if (error) {
@@ -25,15 +34,27 @@ export const generateVariations = async (text: string, personality: string = 'fr
       throw new Error(`Edge Function error: ${error.message}`);
     }
 
-    console.log('Successfully received response from Edge Function:', data);
+    console.log('Successfully received response from Edge Function');
 
-    if (!data.variations || !Array.isArray(data.variations) || data.variations.length !== 3) {
-      console.error('Invalid response format or wrong number of variations:', data);
-      throw new Error('Failed to generate exactly 3 variations');
+    const content = data.content?.[0]?.text;
+    if (!content) {
+      console.error('Unexpected API response format:', data);
+      throw new Error('Invalid response format from API');
     }
 
-    console.log('Successfully generated variations:', data.variations);
-    return data.variations;
+    const variations = content
+      .split('\n')
+      .filter((line: string) => /^\d+\./.test(line.trim()))
+      .map((v: string) => v.replace(/^\d+\.\s*/, '').trim())
+      .slice(0, 3);
+
+    if (variations.length === 0) {
+      console.error('No variations found in response:', content);
+      throw new Error('Failed to generate variations from API response');
+    }
+
+    console.log('Successfully generated variations:', variations);
+    return variations;
 
   } catch (error) {
     console.error('Error in generateVariations:', error);

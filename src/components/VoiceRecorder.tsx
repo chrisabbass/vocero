@@ -36,45 +36,39 @@ const VoiceRecorder = ({ savedPosts, onSavePost, onDeletePost }: VoiceRecorderPr
 
   const handleLogoClick = () => {
     console.log('Logo clicked - resetting states without regeneration');
-    resetStates();
-  };
-
-  const resetStates = () => {
     setVariations([]);
     setSelectedVariation('');
     setIsGenerating(false);
     setTranscript('');
-    setProcessingTranscript('');
+    // Don't reset processingTranscript to prevent regeneration
+    setPersonality('friendly');
   };
 
   const handleTranscriptGenerated = async (newTranscript: string) => {
     console.log('New transcript generated:', newTranscript);
-    
-    // Reset states when new audio is detected
-    if (newTranscript && newTranscript.trim() !== '') {
-      console.log('Valid transcript detected, resetting states');
-      resetStates();
-      setTranscript(newTranscript);
-      setProcessingTranscript(newTranscript);
-      setIsGenerating(true);
+    if (newTranscript === processingTranscript) {
+      console.log('This transcript is already being processed');
+      return;
+    }
 
-      try {
-        const newVariations = await generateVariations(newTranscript, personality);
-        console.log('Generated variations:', newVariations);
-        setVariations(newVariations);
-        setSelectedVariation(newVariations[0] || '');
-      } catch (error) {
-        console.error('Error generating variations:', error);
-        toast({
-          title: "Error",
-          description: "Failed to generate variations. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsGenerating(false);
-      }
-    } else {
-      console.log('Empty or invalid transcript, skipping generation');
+    setTranscript(newTranscript);
+    setProcessingTranscript(newTranscript);
+    setIsGenerating(true);
+
+    try {
+      const newVariations = await generateVariations(newTranscript, personality);
+      console.log('Generated variations:', newVariations);
+      setVariations(newVariations);
+      setSelectedVariation(newVariations[0] || '');
+    } catch (error) {
+      console.error('Error generating variations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate variations. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 

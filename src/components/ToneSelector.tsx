@@ -11,8 +11,6 @@ interface ToneSelectorProps {
 }
 
 const ToneSelector = ({ personality, onPersonalityChange, disabled }: ToneSelectorProps) => {
-  console.log('ToneSelector rendering with personality:', personality);
-  
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-center gap-2">
@@ -24,12 +22,7 @@ const ToneSelector = ({ personality, onPersonalityChange, disabled }: ToneSelect
       <ToggleGroup 
         type="single" 
         value={personality}
-        onValueChange={(value: Personality) => {
-          console.log('Tone selected:', value);
-          if (value) {
-            onPersonalityChange(value);
-          }
-        }}
+        onValueChange={(value: Personality) => value && onPersonalityChange(value)}
         className="justify-center"
         disabled={disabled}
       >

@@ -6,27 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function retryWithBackoff(fn: () => Promise<any>, maxRetries = 3, initialDelay = 1000) {
-  let retries = 0;
-  while (true) {
-    try {
-      return await fn();
-    } catch (error) {
-      retries++;
-      if (retries >= maxRetries) throw error;
-      
-      // If it's a rate limit error, wait longer
-      const isRateLimit = error.message?.includes('rate_limit_error');
-      const delay = isRateLimit ? initialDelay * Math.pow(2, retries) : initialDelay;
-      
-      console.log(`Retry ${retries}/${maxRetries} after ${delay}ms delay`);
-      await sleep(delay);
-    }
-  }
-}
-
 serve(async (req) => {
   console.log('Anthropic proxy function called');
   
@@ -35,6 +14,7 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body and log it for debugging
     const requestBody = await req.json();
     console.log('Received request body:', requestBody);
 
@@ -53,59 +33,56 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY is not set');
     }
 
-    let systemPrompt = '';
+    let systemPrompt = 'You are a professional content writer creating engaging social media posts.';
+    let userPrompt = `Create 3 variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.): ${transcript}`;
+
     switch (personality) {
       case 'direct':
         systemPrompt = 'You are an intelligent, entrepreneurial, and data-forward content writer focused on creating clear, concise, and straightforward social media posts. You are known for your direct but highly informative and impactful posts. Your style is less noise and more signal.';
         break;
       case 'friendly':
-        systemPrompt = 'You are a warm, approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone but don\'t go overboard. Your writing is still professional and business-leaning but with a more warm and friendly tone. Always use 2-3 relevant emojis in each post.';
+        systemPrompt = 'You are a warm, approachable content writer creating engaging and relatable social media posts. Use a conversational and friendly tone but don\'t go overboard. Your writing is still professional and business-leaning but with a more warm and friendly tone. Always use emojis in your post.';
+        userPrompt = `Create 3 variations of this text for social media, using a friendly tone. IMPORTANT: Each variation MUST include at least 2 relevant emojis. Each variation should be on a new line and start with a number (1., 2., 3.): ${transcript}`;
         break;
       case 'inspiring':
-        systemPrompt = 'You are an energetic and motivational content writer creating exciting and dynamic social media posts that inspire those who read them. Use an upbeat and enthusiastic tone that uplifts and inspires the audience! Your style is TedX motivational speaker meets social media influencer.';
+        systemPrompt = 'You are an energetic and motivational content writer creating exciting and dynamic social media posts that inspire those who read them. Use an upbeat and enthusiastic tone that uplifts and inspires the audience! Your style is TedX motivational speaker';
         break;
-      default:
-        systemPrompt = 'You are a professional content writer creating engaging social media posts with a balanced tone.';
     }
 
-    console.log('Using system prompt:', systemPrompt);
+    console.log('Making request to Anthropic API with system prompt:', systemPrompt);
+    console.log('User prompt:', userPrompt);
 
-    const generateVariations = async () => {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
-          max_tokens: 500, // Reduced from 1024 to help with rate limiting
-          system: systemPrompt,
-          messages: [
-            {
-              role: 'user',
-              content: `Create exactly 3 short but impactful variations of this text for social media, maintaining the selected tone. Each variation should be on a new line and start with a number (1., 2., 3.). Keep each variation under 280 characters. Here's the text: ${transcript}`
-            }
-          ],
-          temperature: 0.7
-        })
-      });
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-sonnet-20240229',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userPrompt
+          }
+        ],
+        temperature: 0.7
+      })
+    });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Anthropic API error:', response.status, errorText);
-        throw new Error(`Anthropic API error: ${response.status} ${errorText}`);
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Anthropic API error:', response.status, errorText);
+      throw new Error(`Anthropic API error: ${response.status} ${errorText}`);
+    }
 
-      return response.json();
-    };
-
-    // Use retry logic for the API call
-    const data = await retryWithBackoff(generateVariations);
+    const data = await response.json();
     console.log('Received response from Anthropic:', data);
 
-    // Extract exactly 3 variations from the response
+    // Extract variations from the response
     const content = data.content[0].text;
     const variations = content
       .split(/\d+\.\s+/)  // Split on numbered variations
@@ -115,8 +92,8 @@ serve(async (req) => {
 
     console.log('Extracted variations:', variations);
 
-    if (variations.length !== 3) {
-      throw new Error('Failed to generate exactly 3 variations');
+    if (variations.length === 0) {
+      throw new Error('No variations were generated');
     }
 
     return new Response(
@@ -128,21 +105,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in anthropic-proxy function:', error);
-    
-    // Determine if it's a rate limit error
-    const isRateLimit = error.message?.includes('rate_limit_error');
-    const statusCode = isRateLimit ? 429 : 500;
-    const errorMessage = isRateLimit 
-      ? 'Rate limit exceeded. Please try again in a few moments.'
-      : 'Failed to generate variations. Please try again.';
-
     return new Response(
       JSON.stringify({ 
-        error: errorMessage,
+        error: error.message,
         details: error.stack 
       }), 
       { 
-        status: statusCode,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
