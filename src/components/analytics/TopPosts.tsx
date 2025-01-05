@@ -1,3 +1,5 @@
+import { Twitter, Linkedin } from 'lucide-react';
+
 interface TopPost {
   content: string;
   platform: string;
@@ -10,6 +12,17 @@ interface TopPostsProps {
 }
 
 const TopPosts = ({ posts }: TopPostsProps) => {
+  const PlatformIcon = ({ platform }: { platform: string }) => {
+    switch (platform.toLowerCase()) {
+      case 'twitter':
+        return <Twitter className="h-4 w-4" />;
+      case 'linkedin':
+        return <Linkedin className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="mt-8">
       <div className="bg-white rounded-lg shadow p-6">
@@ -20,11 +33,15 @@ const TopPosts = ({ posts }: TopPostsProps) => {
                 <div className="mt-2">
                   <p className="text-base">{post.content}</p>
                   <div className="mt-2 flex items-center text-sm text-gray-500">
-                    <span className="flex items-center">
-                      <span className="font-medium mr-2">
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium">
                         {post.totalImpressions.toLocaleString()}
                       </span>
-                      impressions on {post.platform}
+                      impressions on 
+                      <span className="flex items-center gap-1">
+                        <PlatformIcon platform={post.platform} />
+                        {post.platform}
+                      </span>
                     </span>
                   </div>
                 </div>

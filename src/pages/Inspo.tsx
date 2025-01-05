@@ -2,10 +2,10 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import TopPosts from '@/components/analytics/TopPosts';
+import { useToast } from '@/components/ui/use-toast';
 
 interface TopPost {
   content: string;
@@ -15,10 +15,37 @@ interface TopPost {
 }
 
 const Inspo = () => {
+  const { toast } = useToast();
+
   const { data: posts, isLoading } = useQuery({
     queryKey: ['top-posts'],
     queryFn: async () => {
       console.log('Fetching top posts...');
+      
+      // First, trigger the fetch-social-posts function
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      try {
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-social-posts', {
+          body: { userId: user.id }
+        });
+
+        if (functionError) {
+          console.error('Error fetching social posts:', functionError);
+          toast({
+            title: "Error",
+            description: "Failed to fetch latest social posts",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error invoking fetch-social-posts:', error);
+      }
+
+      // Then fetch the categorized posts
       const { data, error } = await supabase
         .from('post_metrics')
         .select(`
