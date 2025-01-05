@@ -56,7 +56,7 @@ export const TwitterConnect = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: `${window.location.origin}/schedule`,
+          redirectTo: 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback',
           scopes: 'tweet.write tweet.read users.read offline.access',
         }
       });
