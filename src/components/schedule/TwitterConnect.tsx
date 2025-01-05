@@ -56,7 +56,7 @@ export const TwitterConnect = () => {
         return;
       }
 
-      const redirectUrl = `${window.location.origin}/functions/v1/twitter-oauth`;
+      const redirectUrl = `${window.location.origin}/auth/v1/callback`;
       console.log('Initiating Twitter OAuth flow with redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
