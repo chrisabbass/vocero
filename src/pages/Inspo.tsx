@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
 
 interface TopPost {
   post_content: string;
@@ -12,6 +13,7 @@ interface TopPost {
   comments: number;
   reshares: number;
   category: string;
+  updated_at: string;
 }
 
 const Inspo = () => {
@@ -27,6 +29,7 @@ const Inspo = () => {
           likes,
           comments,
           reshares,
+          updated_at,
           categorized_posts!inner(category)
         `)
         .order('impressions', { ascending: false })
@@ -52,6 +55,7 @@ const Inspo = () => {
           comments: post.comments,
           reshares: post.reshares,
           category,
+          updated_at: post.updated_at,
         });
         return acc;
       }, {});
@@ -75,9 +79,28 @@ const Inspo = () => {
     politics: "Politics"
   };
 
+  // Find the most recent update time across all posts
+  const getLastUpdateTime = () => {
+    let lastUpdate: Date | null = null;
+    Object.values(posts || {}).forEach(categoryPosts => {
+      categoryPosts.forEach(post => {
+        const updateTime = new Date(post.updated_at);
+        if (!lastUpdate || updateTime > lastUpdate) {
+          lastUpdate = updateTime;
+        }
+      });
+    });
+    return lastUpdate ? format(lastUpdate, 'PPpp') : 'Never';
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-8">Top Performing Posts</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Top Performing Posts</h1>
+        <p className="text-sm text-muted-foreground">
+          Last updated: {getLastUpdateTime()}
+        </p>
+      </div>
       
       <Tabs defaultValue="business" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
