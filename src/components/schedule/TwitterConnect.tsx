@@ -52,11 +52,13 @@ export const TwitterConnect = () => {
         return;
       }
 
-      console.log('Initiating Twitter OAuth flow');
+      const redirectUrl = new URL('/schedule', window.location.origin).toString();
+      console.log('Initiating Twitter OAuth flow with redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: `${window.location.origin}/schedule`,
+          redirectTo: redirectUrl,
           scopes: 'tweet.write tweet.read users.read offline.access',
         }
       });
