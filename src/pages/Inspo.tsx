@@ -5,15 +5,12 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
+import TopPosts from '@/components/analytics/TopPosts';
 
 interface TopPost {
-  post_content: string;
-  impressions: number;
-  likes: number;
-  comments: number;
-  reshares: number;
-  category: string;
-  updated_at: string;
+  content: string;
+  platform: string;
+  totalImpressions: number;
 }
 
 const Inspo = () => {
@@ -24,7 +21,9 @@ const Inspo = () => {
       const { data, error } = await supabase
         .from('post_metrics')
         .select(`
+          id,
           post_content,
+          platform,
           impressions,
           likes,
           comments,
@@ -32,8 +31,7 @@ const Inspo = () => {
           updated_at,
           categorized_posts!inner(category)
         `)
-        .order('impressions', { ascending: false })
-        .limit(30);
+        .order('impressions', { ascending: false });
 
       if (error) {
         console.error('Error fetching posts:', error);
@@ -42,28 +40,23 @@ const Inspo = () => {
 
       console.log('Fetched posts:', data);
 
-      // Group posts by category and take top 10 from each
+      // Group posts by category
       const groupedPosts = data.reduce((acc: Record<string, TopPost[]>, post: any) => {
         const category = post.categorized_posts[0].category;
         if (!acc[category]) {
           acc[category] = [];
         }
-        acc[category].push({
-          post_content: post.post_content,
-          impressions: post.impressions,
-          likes: post.likes,
-          comments: post.comments,
-          reshares: post.reshares,
-          category,
-          updated_at: post.updated_at,
-        });
+        
+        // Only take top 10 posts per category
+        if (acc[category].length < 10) {
+          acc[category].push({
+            content: post.post_content,
+            platform: post.platform,
+            totalImpressions: post.impressions
+          });
+        }
         return acc;
       }, {});
-
-      // Take top 10 from each category
-      Object.keys(groupedPosts).forEach(category => {
-        groupedPosts[category] = groupedPosts[category].slice(0, 10);
-      });
 
       return groupedPosts;
     },
@@ -113,33 +106,7 @@ const Inspo = () => {
 
         {Object.entries(categories).map(([value, label]) => (
           <TabsContent key={value} value={value}>
-            <div className="grid gap-6">
-              {posts?.[value]?.map((post: TopPost, index: number) => (
-                <Card key={index} className="overflow-hidden transition-all hover:shadow-lg">
-                  <CardHeader className="space-y-1">
-                    <CardTitle className="text-sm font-medium flex justify-between items-center">
-                      <span>#{index + 1}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {post.impressions.toLocaleString()} impressions
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{post.post_content}</p>
-                    <div className="flex gap-4 mt-4 text-xs text-muted-foreground">
-                      <span>{post.likes.toLocaleString()} likes</span>
-                      <span>{post.comments.toLocaleString()} comments</span>
-                      <span>{post.reshares.toLocaleString()} reshares</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {(!posts?.[value] || posts[value].length === 0) && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No posts found in this category yet.
-                </div>
-              )}
-            </div>
+            <TopPosts posts={posts?.[value] || []} />
           </TabsContent>
         ))}
       </Tabs>

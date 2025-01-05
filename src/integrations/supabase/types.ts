@@ -245,6 +245,10 @@ export type Database = {
         }
         Returns: string
       }
+      refresh_top_posts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       post_category: "business" | "culture" | "politics"

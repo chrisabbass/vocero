@@ -10,9 +10,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function fetchLinkedInMetrics(accessToken: string, postId: string) {
+async function fetchLinkedInTopPosts(accessToken: string) {
   try {
-    const response = await fetch(`https://api.linkedin.com/v2/socialMetrics/${postId}`, {
+    const response = await fetch('https://api.linkedin.com/v2/ugcPosts?q=authors&authors=List(urn:li:organization:12345)&count=100', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-Restli-Protocol-Version': '2.0.0',
@@ -24,38 +24,62 @@ async function fetchLinkedInMetrics(accessToken: string, postId: string) {
     }
 
     const data = await response.json();
-    return {
-      impressions: data.totalShareStatistics?.impressionCount || 0,
-      likes: data.totalShareStatistics?.likeCount || 0,
-      comments: data.totalShareStatistics?.commentCount || 0,
-      reshares: data.totalShareStatistics?.shareCount || 0,
-    };
+    return data.elements || [];
   } catch (error) {
-    console.error('Error fetching LinkedIn metrics:', error);
-    return null;
+    console.error('Error fetching LinkedIn posts:', error);
+    return [];
   }
 }
 
-async function refreshPostMetrics() {
-  console.log('Starting post metrics refresh...');
+async function processAndStorePosts(posts: any[], platform: string) {
+  try {
+    for (const post of posts) {
+      const { data, error } = await supabase
+        .from('post_metrics')
+        .upsert({
+          platform,
+          post_content: post.content || post.text,
+          impressions: post.impressionCount || post.public_metrics?.impression_count || 0,
+          likes: post.likeCount || post.public_metrics?.like_count || 0,
+          comments: post.commentCount || post.public_metrics?.reply_count || 0,
+          reshares: post.shareCount || post.public_metrics?.retweet_count || 0,
+          updated_at: new Date().toISOString()
+        })
+        .select('id')
+        .single();
 
-  // Get all posts from the last 30 days
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      if (error) {
+        console.error('Error storing post:', error);
+        continue;
+      }
 
-  const { data: posts, error: postsError } = await supabase
-    .from('post_metrics')
-    .select('*')
-    .gte('created_at', thirtyDaysAgo.toISOString());
+      // Categorize post using simple keyword matching
+      // In a production environment, you might want to use a more sophisticated categorization system
+      const content = (post.content || post.text || '').toLowerCase();
+      let category = 'business'; // default category
 
-  if (postsError) {
-    console.error('Error fetching posts:', postsError);
-    return;
+      if (content.includes('culture') || content.includes('art') || content.includes('music')) {
+        category = 'culture';
+      } else if (content.includes('politics') || content.includes('government') || content.includes('policy')) {
+        category = 'politics';
+      }
+
+      await supabase
+        .from('categorized_posts')
+        .upsert({
+          post_metrics_id: data.id,
+          category
+        });
+    }
+  } catch (error) {
+    console.error('Error processing posts:', error);
   }
+}
 
-  console.log(`Found ${posts.length} posts to refresh`);
+async function refreshTopPosts() {
+  console.log('Starting top posts refresh...');
 
-  // Get all user social tokens
+  // Get all social tokens
   const { data: tokens, error: tokensError } = await supabase
     .from('user_social_tokens')
     .select('*');
@@ -65,41 +89,14 @@ async function refreshPostMetrics() {
     return;
   }
 
-  // Process each post
-  for (const post of posts) {
-    console.log(`Processing post: ${post.id}`);
-    
-    try {
-      let metrics = null;
-
-      // Find matching token for the post's platform
-      const token = tokens.find(t => t.platform === post.platform);
-      if (!token) {
-        console.log(`No token found for platform: ${post.platform}`);
-        continue;
-      }
-
-      if (post.platform === 'linkedin') {
-        metrics = await fetchLinkedInMetrics(token.access_token, post.id);
-      }
-
-      if (metrics) {
-        console.log(`Updating metrics for post ${post.id}:`, metrics);
-        const { error: updateError } = await supabase
-          .from('post_metrics')
-          .update(metrics)
-          .eq('id', post.id);
-
-        if (updateError) {
-          console.error(`Error updating metrics for post ${post.id}:`, updateError);
-        }
-      }
-    } catch (error) {
-      console.error(`Error processing post ${post.id}:`, error);
-    }
+  // Process LinkedIn posts
+  const linkedInTokens = tokens?.filter(t => t.platform === 'linkedin') || [];
+  for (const token of linkedInTokens) {
+    const posts = await fetchLinkedInTopPosts(token.access_token);
+    await processAndStorePosts(posts, 'linkedin');
   }
 
-  console.log('Post metrics refresh completed');
+  console.log('Posts refresh completed');
 }
 
 Deno.serve(async (req) => {
@@ -108,7 +105,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await refreshPostMetrics();
+    await refreshTopPosts();
     return new Response(
       JSON.stringify({ message: 'Posts refreshed successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
