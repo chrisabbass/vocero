@@ -56,14 +56,22 @@ export const TwitterConnect = () => {
         return;
       }
 
-      const redirectUrl = `${window.location.origin}/auth/v1/callback`;
-      console.log('Initiating Twitter OAuth flow with redirect URL:', redirectUrl);
+      // Create state parameter with user ID
+      const state = JSON.stringify({
+        userId: user.id,
+        redirectTo: '/schedule'
+      });
+
+      console.log('Initiating Twitter OAuth flow');
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: `${window.location.origin}/auth/v1/callback`,
           scopes: 'tweet.write tweet.read users.read offline.access',
+          queryParams: {
+            state
+          }
         }
       });
 
