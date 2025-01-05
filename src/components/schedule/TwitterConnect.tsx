@@ -23,11 +23,15 @@ export const TwitterConnect = () => {
       }
 
       console.log('Checking Twitter connection for user:', user.id);
-      const { data: identities } = await supabase.auth.getUser();
-      const hasTwitter = identities.user?.app_metadata?.providers?.includes('twitter');
+      const { data: tokens } = await supabase
+        .from('user_social_tokens')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('platform', 'twitter')
+        .maybeSingle();
 
-      console.log('Twitter connection status:', hasTwitter ? 'Connected' : 'Not connected');
-      setIsConnected(!!hasTwitter);
+      console.log('Twitter connection status:', tokens ? 'Connected' : 'Not connected');
+      setIsConnected(!!tokens);
     } catch (error) {
       console.error('Error checking Twitter connection:', error);
       toast({
@@ -52,7 +56,7 @@ export const TwitterConnect = () => {
         return;
       }
 
-      const redirectUrl = new URL('/schedule', window.location.origin).toString();
+      const redirectUrl = `${window.location.origin}/functions/v1/twitter-oauth`;
       console.log('Initiating Twitter OAuth flow with redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({

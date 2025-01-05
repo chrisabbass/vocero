@@ -68,14 +68,15 @@ export const LinkedInConnect = () => {
       
       // Create state parameter with user ID
       const stateParam = JSON.stringify({
-        userId: user.id
+        userId: user.id,
+        redirectUrl: window.location.origin + '/schedule'
       });
 
       // Redirect to LinkedIn OAuth with only w_member_social scope
       const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
       linkedinUrl.searchParams.append('response_type', 'code');
       linkedinUrl.searchParams.append('client_id', '780umlz9pwq8w4');
-      linkedinUrl.searchParams.append('redirect_uri', 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback');
+      linkedinUrl.searchParams.append('redirect_uri', `${window.location.origin}/functions/v1/linkedin-oauth`);
       linkedinUrl.searchParams.append('state', stateParam);
       linkedinUrl.searchParams.append('scope', 'w_member_social');
 
