@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import TopPosts from '@/components/analytics/TopPosts';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface TopPost {
   content: string;
@@ -16,20 +18,40 @@ interface TopPost {
 
 const Inspo = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['top-posts'],
     queryFn: async () => {
       console.log('Starting to fetch top posts...');
       
-      // First, trigger the fetch-social-posts function
+      // First, check if user is authenticated
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('No authenticated user found');
         throw new Error('User not authenticated');
       }
 
-      console.log('Authenticated user found, invoking fetch-social-posts function...');
+      console.log('Authenticated user found, checking social connections...');
+
+      // Check social connections
+      const { data: tokens, error: tokensError } = await supabase
+        .from('user_social_tokens')
+        .select('platform')
+        .eq('user_id', user.id);
+
+      if (tokensError) {
+        console.error('Error checking social connections:', tokensError);
+        throw tokensError;
+      }
+
+      const platforms = new Set(tokens?.map(t => t.platform) || []);
+      if (!platforms.has('twitter') || !platforms.has('linkedin')) {
+        throw new Error('social_connections_missing');
+      }
+      
+      console.log('Social connections found:', platforms);
+      console.log('Invoking fetch-social-posts function...');
       
       try {
         const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-social-posts', {
@@ -105,11 +127,67 @@ const Inspo = () => {
 
   if (error) {
     console.error('Error in posts query:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (errorMessage === 'User not authenticated') {
+      return (
+        <div className="container mx-auto py-8 px-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h2 className="text-red-800 font-semibold">Please log in</h2>
+            <p className="text-red-600 mt-1">You need to be logged in to view your posts.</p>
+            <Button 
+              onClick={() => navigate('/login')} 
+              className="mt-4"
+            >
+              Go to Login
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (errorMessage === 'social_connections_missing') {
+      return (
+        <div className="container mx-auto py-8 px-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h2 className="text-yellow-800 font-semibold">Connect Your Social Accounts</h2>
+            <p className="text-yellow-600 mt-1">
+              To view your posts, you need to connect both your Twitter and LinkedIn accounts.
+            </p>
+            <Button 
+              onClick={() => navigate('/schedule')} 
+              className="mt-4"
+            >
+              Go to Connections Page
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h2 className="text-red-800 font-semibold">Unable to load posts</h2>
-          <p className="text-red-600 mt-1">Please make sure you're connected to Twitter and LinkedIn</p>
+          <p className="text-red-600 mt-1">
+            Please make sure you're connected to Twitter and LinkedIn and have posted content on these platforms.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if we have any posts at all
+  const hasAnyPosts = posts && Object.values(posts).some(categoryPosts => categoryPosts.length > 0);
+
+  if (!hasAnyPosts) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h2 className="text-yellow-800 font-semibold">No posts found</h2>
+          <p className="text-yellow-600 mt-1">
+            We couldn't find any posts from your connected accounts. Make sure you have posted content on Twitter and LinkedIn.
+          </p>
         </div>
       </div>
     );
@@ -134,22 +212,6 @@ const Inspo = () => {
     });
     return lastUpdate ? format(lastUpdate, 'PPpp') : 'Never';
   };
-
-  // Check if we have any posts at all
-  const hasAnyPosts = posts && Object.values(posts).some(categoryPosts => categoryPosts.length > 0);
-
-  if (!hasAnyPosts) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h2 className="text-yellow-800 font-semibold">No posts found</h2>
-          <p className="text-yellow-600 mt-1">
-            Make sure you're connected to Twitter and LinkedIn, and have posted content on these platforms.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto py-8 px-4">
