@@ -2,6 +2,7 @@ interface TopPost {
   content: string;
   platform: string;
   totalImpressions: number;
+  updated_at: string;
 }
 
 interface TopPostsProps {

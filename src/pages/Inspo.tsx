@@ -11,6 +11,7 @@ interface TopPost {
   content: string;
   platform: string;
   totalImpressions: number;
+  updated_at: string;
 }
 
 const Inspo = () => {
@@ -52,7 +53,8 @@ const Inspo = () => {
           acc[category].push({
             content: post.post_content,
             platform: post.platform,
-            totalImpressions: post.impressions
+            totalImpressions: post.impressions,
+            updated_at: post.updated_at
           });
         }
         return acc;
