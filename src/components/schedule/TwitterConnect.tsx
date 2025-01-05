@@ -70,7 +70,9 @@ export const TwitterConnect = () => {
           redirectTo: `${window.location.origin}/auth/v1/callback`,
           scopes: 'tweet.write tweet.read users.read offline.access',
           queryParams: {
-            state
+            state,
+            client_id: await supabase.rpc('get_secret', { name: 'TWITTER_CLIENT_ID' }),
+            client_secret: await supabase.rpc('get_secret', { name: 'TWITTER_CLIENT_SECRET' })
           }
         }
       });
