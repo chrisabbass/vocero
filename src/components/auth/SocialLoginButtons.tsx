@@ -10,8 +10,8 @@ export const SocialLoginButtons = () => {
     try {
       console.log('Starting LinkedIn OAuth process...');
       
-      // Use the production callback URL
-      const redirectUrl = 'https://www.vocero.ai/auth/v1/callback';
+      // Use the Supabase callback URL for development
+      const redirectUrl = 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback';
       console.log('Using redirect URL:', redirectUrl);
       
       console.log('Initiating LinkedIn OAuth with Supabase...');
@@ -70,7 +70,7 @@ export const SocialLoginButtons = () => {
   const handleTwitterLogin = async () => {
     try {
       console.log('Initiating Twitter OAuth login...');
-      const redirectUrl = 'https://www.vocero.ai/auth/v1/callback';
+      const redirectUrl = 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback';
       console.log('Using redirect URL:', redirectUrl);
       
       console.log('Initiating Twitter OAuth with Supabase...');
