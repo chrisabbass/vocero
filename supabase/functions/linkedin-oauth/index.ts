@@ -15,11 +15,15 @@ const corsHeaders = {
 async function initiateOAuth(redirectUrl: string) {
   console.log('[LinkedIn OAuth] Initiating OAuth flow with redirect URL:', redirectUrl);
   
-  // Generate a state parameter that includes return path
+  // Generate a state parameter that includes return path and timestamp
   const state = JSON.stringify({
-    returnTo: '/schedule'
+    returnTo: '/schedule',
+    timestamp: Date.now()
   });
 
+  // Ensure the redirect URL is properly encoded
+  const encodedRedirectUrl = encodeURIComponent(redirectUrl);
+  
   const linkedInUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
   linkedInUrl.searchParams.append('response_type', 'code');
   linkedInUrl.searchParams.append('client_id', LINKEDIN_CLIENT_ID);
@@ -115,16 +119,18 @@ Deno.serve(async (req) => {
 
   try {
     if (req.method === 'POST') {
-      const { action, redirectUrl } = await req.json();
-      console.log('[LinkedIn OAuth] POST request with action:', action);
+      const { redirectUrl } = await req.json();
+      console.log('[LinkedIn OAuth] POST request with redirectUrl:', redirectUrl);
       
-      if (action === 'initiate' && redirectUrl) {
-        console.log('[LinkedIn OAuth] Processing initiate action');
-        const result = await initiateOAuth(redirectUrl);
-        return new Response(JSON.stringify(result), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      if (!redirectUrl) {
+        throw new Error('Missing redirectUrl parameter');
       }
+
+      console.log('[LinkedIn OAuth] Processing initiate action');
+      const result = await initiateOAuth(redirectUrl);
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Handle callback
