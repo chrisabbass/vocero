@@ -10,7 +10,8 @@ export const SocialLoginButtons = () => {
     try {
       console.log('Starting LinkedIn OAuth process...');
       
-      const redirectUrl = `${window.location.origin}/schedule`;
+      // Use vocero.ai as the redirect URL in production
+      const redirectUrl = 'https://vocero.ai/schedule';
       console.log('Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -60,7 +61,7 @@ export const SocialLoginButtons = () => {
   const handleTwitterLogin = async () => {
     try {
       console.log('Initiating Twitter OAuth login...');
-      const redirectUrl = `${window.location.origin}/schedule`;
+      const redirectUrl = 'https://vocero.ai/schedule';
       console.log('Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
