@@ -14,8 +14,8 @@ export const SocialLoginButtons = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState({ linkedin: false, twitter: false });
 
-  // Get the current URL for redirect
-  const redirectUrl = `${window.location.origin}/auth/callback`;
+  // Use the preview URL for redirect
+  const redirectUrl = 'https://vocero.lovable.app/auth/callback';
   
   const handleLinkedInLogin = async () => {
     if (isLoading.linkedin) return;
