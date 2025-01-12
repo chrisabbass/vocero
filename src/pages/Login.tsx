@@ -20,18 +20,52 @@ const Login = () => {
     
     // Handle OAuth callback
     const handleAuthCallback = async () => {
+      // Check for hash parameters (used by some OAuth providers)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const error = hashParams.get('error');
-      const errorDescription = hashParams.get('error_description');
-      
-      if (error) {
-        console.error('OAuth callback error:', error, errorDescription);
+      const hashError = hashParams.get('error');
+      const hashErrorDescription = hashParams.get('error_description');
+
+      // Check for query parameters (used by other OAuth providers)
+      const queryParams = new URLSearchParams(window.location.search);
+      const queryError = queryParams.get('error');
+      const queryErrorDescription = queryParams.get('error_description');
+      const code = queryParams.get('code');
+
+      // Handle any OAuth errors
+      if (hashError || queryError) {
+        const errorMessage = hashErrorDescription || queryErrorDescription || "Failed to authenticate";
+        console.error('OAuth callback error:', { hashError, queryError, errorMessage });
         toast({
           title: "Authentication Error",
-          description: errorDescription || "Failed to authenticate",
+          description: errorMessage,
           variant: "destructive",
         });
         return;
+      }
+
+      // If we have a code, exchange it for a session
+      if (code) {
+        console.log('Received OAuth code, exchanging for session...');
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        
+        if (error) {
+          console.error('Error exchanging code for session:', error);
+          toast({
+            title: "Authentication Error",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.session) {
+          console.log('Successfully exchanged code for session');
+          toast({
+            title: "Success",
+            description: "Successfully authenticated",
+          });
+          navigate(from);
+        }
       }
     };
 
