@@ -69,19 +69,24 @@ export const LinkedInConnect = () => {
       // Create state parameter with user ID
       const stateParam = JSON.stringify({
         userId: user.id,
-        redirectUrl: window.location.origin + '/schedule'
+        redirectTo: `${window.location.origin}/schedule`
       });
 
-      // Redirect to LinkedIn OAuth with only w_member_social scope
-      const linkedinUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
-      linkedinUrl.searchParams.append('response_type', 'code');
-      linkedinUrl.searchParams.append('client_id', '780umlz9pwq8w4');
-      linkedinUrl.searchParams.append('redirect_uri', `${window.location.origin}/auth/v1/callback`);
-      linkedinUrl.searchParams.append('state', stateParam);
-      linkedinUrl.searchParams.append('scope', 'w_member_social');
+      // Use Supabase's built-in OAuth
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin',
+        options: {
+          redirectTo: `${window.location.origin}/auth/v1/callback`,
+          scopes: 'w_member_social',
+          queryParams: {
+            state: stateParam
+          }
+        }
+      });
 
-      console.log('Redirecting to LinkedIn with URL:', linkedinUrl.toString());
-      window.location.href = linkedinUrl.toString();
+      if (error) throw error;
+      console.log('LinkedIn OAuth initiated:', data);
+
     } catch (error) {
       console.error('Error connecting to LinkedIn:', error);
       toast({
