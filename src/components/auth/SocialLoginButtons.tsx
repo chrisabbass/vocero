@@ -9,6 +9,7 @@ export const SocialLoginButtons = () => {
   const [isLoading, setIsLoading] = useState({ linkedin: false, twitter: false });
 
   const handleLinkedInLogin = async () => {
+    if (isLoading.linkedin) return; // Prevent multiple rapid clicks
     setIsLoading(prev => ({ ...prev, linkedin: true }));
     try {
       console.log('Starting LinkedIn OAuth process...');
@@ -23,7 +24,8 @@ export const SocialLoginButtons = () => {
         options: {
           scopes: 'w_member_social',
           queryParams: {
-            auth_type: 'reauthenticate'
+            auth_type: 'reauthenticate',
+            debug_source: 'vocero'
           },
           redirectTo: redirectUrl
         }
@@ -34,7 +36,8 @@ export const SocialLoginButtons = () => {
         console.error('Error details:', {
           message: error.message,
           status: error.status,
-          name: error.name
+          name: error.name,
+          stack: error.stack
         });
         toast({
           title: "Authentication Error",
@@ -56,27 +59,35 @@ export const SocialLoginButtons = () => {
       }
 
       console.log('Successfully received OAuth URL from Supabase');
-      console.log('Redirecting to:', data.url);
+      console.log('Full OAuth URL:', data.url);
       
-      // Add state to URL for debugging
+      // Add debug parameters
       const urlWithDebug = new URL(data.url);
       urlWithDebug.searchParams.append('debug_source', 'vocero');
+      urlWithDebug.searchParams.append('debug_time', new Date().toISOString());
+      console.log('Redirecting to URL with debug params:', urlWithDebug.toString());
+      
       window.location.href = urlWithDebug.toString();
       
     } catch (error) {
       console.error('Unexpected error in LinkedIn login:', error);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
+      console.error('Full error object:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(prev => ({ ...prev, linkedin: false }));
+      // Small delay before allowing another attempt
+      setTimeout(() => {
+        setIsLoading(prev => ({ ...prev, linkedin: false }));
+      }, 1000);
     }
   };
 
   const handleTwitterLogin = async () => {
+    if (isLoading.twitter) return; // Prevent multiple rapid clicks
     setIsLoading(prev => ({ ...prev, twitter: true }));
     try {
       console.log('Initiating Twitter OAuth login...');
@@ -89,7 +100,8 @@ export const SocialLoginButtons = () => {
         options: {
           redirectTo: redirectUrl,
           queryParams: {
-            debug_source: 'vocero' // Add debug parameter
+            debug_source: 'vocero',
+            debug_time: new Date().toISOString()
           }
         }
       });
@@ -99,26 +111,34 @@ export const SocialLoginButtons = () => {
         console.error('Error details:', {
           message: error.message,
           status: error.status,
-          name: error.name
+          name: error.name,
+          stack: error.stack
         });
         throw error;
       }
 
       if (data?.url) {
         console.log('Successfully received OAuth URL from Supabase');
-        console.log('Redirecting to:', data.url);
+        console.log('Full OAuth URL:', data.url);
         window.location.href = data.url;
+      } else {
+        console.error('No URL received from Twitter OAuth');
+        throw new Error('No OAuth URL received');
       }
     } catch (error) {
       console.error('Error connecting to Twitter:', error);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
+      console.error('Full error object:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
         description: "Failed to connect to Twitter",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(prev => ({ ...prev, twitter: false }));
+      // Small delay before allowing another attempt
+      setTimeout(() => {
+        setIsLoading(prev => ({ ...prev, twitter: false }));
+      }, 1000);
     }
   };
 
