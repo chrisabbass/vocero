@@ -31,12 +31,10 @@ export const SocialLoginButtons = () => {
       });
 
       if (error) {
-        console.error('LinkedIn OAuth error:', error);
-        console.error('Error details:', {
+        console.error('LinkedIn OAuth error:', {
           message: error.message,
           status: error.status,
-          name: error.name,
-          stack: error.stack
+          name: error.name
         });
         toast({
           title: "Authentication Error",
@@ -90,12 +88,10 @@ export const SocialLoginButtons = () => {
       });
 
       if (error) {
-        console.error('Twitter OAuth error:', error);
-        console.error('Error details:', {
+        console.error('Twitter OAuth error:', {
           message: error.message,
           status: error.status,
-          name: error.name,
-          stack: error.stack
+          name: error.name
         });
         toast({
           title: "Authentication Error",
