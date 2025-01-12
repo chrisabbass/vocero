@@ -17,6 +17,9 @@ const Login = () => {
 
   useEffect(() => {
     console.log('Login page mounted, setting up auth listeners');
+    console.log('Current URL:', window.location.href);
+    console.log('Search params:', window.location.search);
+    console.log('Hash:', window.location.hash);
     
     // Handle OAuth callback
     const handleAuthCallback = async () => {
@@ -30,6 +33,14 @@ const Login = () => {
       const queryError = queryParams.get('error');
       const queryErrorDescription = queryParams.get('error_description');
       const code = queryParams.get('code');
+
+      console.log('OAuth callback parameters:', {
+        hashError,
+        hashErrorDescription,
+        queryError,
+        queryErrorDescription,
+        hasCode: !!code
+      });
 
       // Handle any OAuth errors
       if (hashError || queryError) {
