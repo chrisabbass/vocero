@@ -17,11 +17,10 @@ export const SocialLoginButtons = () => {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('[LinkedIn OAuth] Using redirect URL:', redirectUrl);
       
-      // First, try to invoke the edge function to initiate OAuth
       try {
         console.log('[LinkedIn OAuth] Invoking edge function');
         const { data: functionData, error: functionError } = await supabase.functions.invoke('linkedin-oauth', {
-          body: { action: 'initiate', redirectUrl }
+          body: { redirectUrl }
         });
 
         if (functionError) {
