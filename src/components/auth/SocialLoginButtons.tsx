@@ -26,7 +26,7 @@ export const SocialLoginButtons = () => {
       console.log('Using redirect URL:', redirectUrl);
       
       const timeoutPromise = new Promise<OAuthResponse>((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 15000); // 15 second timeout
+        setTimeout(() => reject(new Error('Request timed out')), 15000);
       });
 
       const authPromise = supabase.auth.signInWithOAuth({
@@ -109,7 +109,7 @@ export const SocialLoginButtons = () => {
       console.log('Using redirect URL:', redirectUrl);
       
       const timeoutPromise = new Promise<OAuthResponse>((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 15000); // 15 second timeout
+        setTimeout(() => reject(new Error('Request timed out')), 15000);
       });
 
       const authPromise = supabase.auth.signInWithOAuth({

@@ -32,7 +32,7 @@ async function handleTwitterCallback(code: string, stateParam: string) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback',
+        redirect_uri: `${SUPABASE_URL}/auth/v1/callback`,
         code_verifier: 'challenge',
       }),
     });
