@@ -8,6 +8,7 @@ export const SocialLoginButtons = () => {
 
   const handleLinkedInLogin = async () => {
     try {
+      console.log('Initiating LinkedIn OAuth login...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
@@ -15,12 +16,43 @@ export const SocialLoginButtons = () => {
           scopes: 'w_member_social',
           queryParams: {
             auth_type: 'reauthenticate'
-          }
+          },
+          skipBrowserRedirect: true // This enables popup behavior
         }
       });
 
-      if (error) throw error;
-      console.log('LinkedIn OAuth initiated:', data);
+      if (error) {
+        console.error('LinkedIn OAuth error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log('Opening LinkedIn OAuth popup...');
+        // Open the OAuth URL in a popup
+        const popup = window.open(
+          data.url,
+          'Login with LinkedIn',
+          'width=600,height=700,left=200,top=100'
+        );
+
+        // Handle popup closure
+        const checkPopup = setInterval(() => {
+          if (!popup || popup.closed) {
+            console.log('LinkedIn popup closed');
+            clearInterval(checkPopup);
+            // Check if the user was authenticated
+            supabase.auth.getSession().then(({ data: { session } }) => {
+              if (session) {
+                console.log('Successfully authenticated with LinkedIn');
+                toast({
+                  title: "Success!",
+                  description: "Successfully logged in with LinkedIn",
+                });
+              }
+            });
+          }
+        }, 500);
+      }
     } catch (error) {
       console.error('Error connecting to LinkedIn:', error);
       toast({
@@ -33,18 +65,47 @@ export const SocialLoginButtons = () => {
 
   const handleTwitterLogin = async () => {
     try {
+      console.log('Initiating Twitter OAuth login...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
           redirectTo: `${window.location.origin}/schedule`,
-          queryParams: {
-            auth_type: 'reauthenticate'
-          }
+          skipBrowserRedirect: true // This enables popup behavior
         }
       });
 
-      if (error) throw error;
-      console.log('Twitter OAuth initiated:', data);
+      if (error) {
+        console.error('Twitter OAuth error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log('Opening Twitter OAuth popup...');
+        // Open the OAuth URL in a popup
+        const popup = window.open(
+          data.url,
+          'Login with Twitter',
+          'width=600,height=700,left=200,top=100'
+        );
+
+        // Handle popup closure
+        const checkPopup = setInterval(() => {
+          if (!popup || popup.closed) {
+            console.log('Twitter popup closed');
+            clearInterval(checkPopup);
+            // Check if the user was authenticated
+            supabase.auth.getSession().then(({ data: { session } }) => {
+              if (session) {
+                console.log('Successfully authenticated with Twitter');
+                toast({
+                  title: "Success!",
+                  description: "Successfully logged in with Twitter",
+                });
+              }
+            });
+          }
+        }, 500);
+      }
     } catch (error) {
       console.error('Error connecting to Twitter:', error);
       toast({
