@@ -35,7 +35,6 @@ export const SocialLoginButtons = () => {
 
         console.log('[LinkedIn OAuth] Redirecting to:', functionData.url);
         window.location.href = functionData.url;
-        return;
       } catch (functionError) {
         console.error('[LinkedIn OAuth] Failed to invoke edge function:', functionError);
         throw functionError;
