@@ -10,26 +10,6 @@ export const SocialLoginButtons = () => {
     try {
       console.log('Starting LinkedIn OAuth process...');
       
-      // First check if LinkedIn provider is configured
-      const { data: { providers }, error: providersError } = await supabase.auth.getProviders();
-      console.log('Available auth providers:', providers);
-      
-      if (providersError) {
-        console.error('Error fetching providers:', providersError);
-        throw new Error('Could not verify available authentication providers');
-      }
-
-      if (!providers?.includes('linkedin')) {
-        console.error('LinkedIn provider is not enabled in Supabase');
-        toast({
-          title: "Configuration Error",
-          description: "LinkedIn authentication is not properly configured. Please contact support.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('Initiating LinkedIn OAuth sign-in...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
@@ -143,19 +123,16 @@ export const SocialLoginButtons = () => {
 
       if (data?.url) {
         console.log('Opening Twitter OAuth popup...');
-        // Open the OAuth URL in a popup
         const popup = window.open(
           data.url,
           'Login with Twitter',
           'width=600,height=700,left=200,top=100'
         );
 
-        // Handle popup closure
         const checkPopup = setInterval(() => {
           if (!popup || popup.closed) {
             console.log('Twitter popup closed');
             clearInterval(checkPopup);
-            // Check if the user was authenticated
             supabase.auth.getSession().then(({ data: { session } }) => {
               if (session) {
                 console.log('Successfully authenticated with Twitter');
