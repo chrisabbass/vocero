@@ -14,15 +14,16 @@ const corsHeaders = {
 
 async function handleLinkedInCallback(code: string, state: string) {
   try {
-    console.log('Handling LinkedIn callback with state:', state);
+    console.log('[LinkedIn OAuth] Starting callback handling with code');
     
     // Parse the state parameter
     const parsedState = JSON.parse(state);
     const userId = parsedState.userId;
 
-    console.log('Parsed user ID from state:', userId);
+    console.log('[LinkedIn OAuth] User ID from state:', userId);
     
     // Exchange code for access token
+    console.log('[LinkedIn OAuth] Exchanging code for access token');
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',
       headers: {
@@ -39,14 +40,15 @@ async function handleLinkedInCallback(code: string, state: string) {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('LinkedIn token exchange failed:', errorText);
+      console.error('[LinkedIn OAuth] Token exchange failed:', errorText);
       throw new Error(`Failed to get access token: ${errorText}`);
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('Successfully received access token');
+    console.log('[LinkedIn OAuth] Successfully received access token');
 
-    // Store the token in the database using the service role key
+    // Store the token in the database using the service role client
+    console.log('[LinkedIn OAuth] Storing token in database for user:', userId);
     const { error: upsertError } = await supabase
       .from('user_social_tokens')
       .upsert({
@@ -59,14 +61,14 @@ async function handleLinkedInCallback(code: string, state: string) {
       });
 
     if (upsertError) {
-      console.error('Error storing token:', upsertError);
+      console.error('[LinkedIn OAuth] Error storing token:', upsertError);
       throw upsertError;
     }
 
-    console.log('Successfully stored LinkedIn token for user:', userId);
+    console.log('[LinkedIn OAuth] Successfully stored token');
     return { success: true };
   } catch (error) {
-    console.error('Error in handleLinkedInCallback:', error);
+    console.error('[LinkedIn OAuth] Error in callback:', error);
     throw error;
   }
 }
@@ -85,15 +87,15 @@ Deno.serve(async (req) => {
     const error = url.searchParams.get('error');
     const error_description = url.searchParams.get('error_description');
 
-    console.log('Received OAuth callback with params:', { 
-      code: !!code, 
-      state: !!state, 
+    console.log('[LinkedIn OAuth] Received callback with params:', { 
+      hasCode: !!code, 
+      hasState: !!state, 
       error, 
       error_description 
     });
 
     if (error || error_description) {
-      console.error('LinkedIn OAuth error:', { error, error_description });
+      console.error('[LinkedIn OAuth] Error from LinkedIn:', { error, error_description });
       return new Response(
         JSON.stringify({ error: error_description || 'OAuth error' }),
         { 
@@ -104,13 +106,14 @@ Deno.serve(async (req) => {
     }
 
     if (!code || !state) {
-      console.error('Missing required parameters:', { code: !!code, state: !!state });
+      console.error('[LinkedIn OAuth] Missing required parameters');
       throw new Error('Missing code or state parameter');
     }
 
     await handleLinkedInCallback(code, state);
     
     // Redirect to the frontend after successful OAuth
+    console.log('[LinkedIn OAuth] Successfully handled callback, redirecting to /schedule');
     return new Response(null, {
       status: 302,
       headers: {
@@ -119,10 +122,13 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
-    console.error('Error in OAuth callback:', error);
+    console.error('[LinkedIn OAuth] Error handling callback:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });

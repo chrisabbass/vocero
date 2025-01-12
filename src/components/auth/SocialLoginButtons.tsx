@@ -14,15 +14,13 @@ export const SocialLoginButtons = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState({ linkedin: false, twitter: false });
 
-  // Use the current window location for redirect
-  const redirectUrl = `${window.location.origin}/auth/callback`;
-  
   const handleLinkedInLogin = async () => {
     if (isLoading.linkedin) return;
     setIsLoading(prev => ({ ...prev, linkedin: true }));
     
     try {
       console.log('[LinkedIn OAuth] Starting authentication process');
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('[LinkedIn OAuth] Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -62,8 +60,18 @@ export const SocialLoginButtons = () => {
         return;
       }
 
-      console.log('[LinkedIn OAuth] Redirecting to:', data.url);
-      window.location.href = data.url;
+      // Store user ID in state parameter for the callback
+      const state = JSON.stringify({
+        userId: (await supabase.auth.getUser()).data.user?.id,
+        returnTo: window.location.pathname
+      });
+
+      // Append state to the OAuth URL
+      const finalUrl = new URL(data.url);
+      finalUrl.searchParams.set('state', state);
+
+      console.log('[LinkedIn OAuth] Redirecting to:', finalUrl.toString());
+      window.location.href = finalUrl.toString();
       
     } catch (error) {
       console.error('[LinkedIn OAuth] Unexpected error:', error);
@@ -83,6 +91,7 @@ export const SocialLoginButtons = () => {
     
     try {
       console.log('[Twitter OAuth] Starting authentication process');
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('[Twitter OAuth] Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -122,8 +131,18 @@ export const SocialLoginButtons = () => {
         return;
       }
 
-      console.log('[Twitter OAuth] Redirecting to:', data.url);
-      window.location.href = data.url;
+      // Store user ID in state parameter for the callback
+      const state = JSON.stringify({
+        userId: (await supabase.auth.getUser()).data.user?.id,
+        returnTo: window.location.pathname
+      });
+
+      // Append state to the OAuth URL
+      const finalUrl = new URL(data.url);
+      finalUrl.searchParams.set('state', state);
+
+      console.log('[Twitter OAuth] Redirecting to:', finalUrl.toString());
+      window.location.href = finalUrl.toString();
       
     } catch (error) {
       console.error('[Twitter OAuth] Unexpected error:', error);
