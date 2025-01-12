@@ -8,7 +8,28 @@ export const SocialLoginButtons = () => {
 
   const handleLinkedInLogin = async () => {
     try {
-      console.log('Initiating LinkedIn OAuth login...');
+      console.log('Starting LinkedIn OAuth process...');
+      
+      // First check if LinkedIn provider is configured
+      const { data: { providers }, error: providersError } = await supabase.auth.getProviders();
+      console.log('Available auth providers:', providers);
+      
+      if (providersError) {
+        console.error('Error fetching providers:', providersError);
+        throw new Error('Could not verify available authentication providers');
+      }
+
+      if (!providers?.includes('linkedin')) {
+        console.error('LinkedIn provider is not enabled in Supabase');
+        toast({
+          title: "Configuration Error",
+          description: "LinkedIn authentication is not properly configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Initiating LinkedIn OAuth sign-in...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
@@ -16,47 +37,90 @@ export const SocialLoginButtons = () => {
           queryParams: {
             auth_type: 'reauthenticate'
           },
-          skipBrowserRedirect: true // This enables popup behavior
+          skipBrowserRedirect: true
         }
       });
 
       if (error) {
         console.error('LinkedIn OAuth error:', error);
-        throw error;
+        toast({
+          title: "Authentication Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (data?.url) {
-        console.log('Opening LinkedIn OAuth popup...');
-        // Open the OAuth URL in a popup
-        const popup = window.open(
-          data.url,
-          'Login with LinkedIn',
-          'width=600,height=700,left=200,top=100'
-        );
+      if (!data?.url) {
+        console.error('No OAuth URL received from Supabase');
+        toast({
+          title: "Error",
+          description: "Failed to initiate LinkedIn login",
+          variant: "destructive",
+        });
+        return;
+      }
 
-        // Handle popup closure
-        const checkPopup = setInterval(() => {
+      console.log('Opening LinkedIn OAuth popup with URL:', data.url);
+      const popup = window.open(
+        data.url,
+        'Login with LinkedIn',
+        'width=600,height=700,left=200,top=100'
+      );
+
+      if (!popup) {
+        console.error('Popup was blocked by browser');
+        toast({
+          title: "Error",
+          description: "Please allow popups for this site to login with LinkedIn",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const checkPopup = setInterval(async () => {
+        try {
           if (!popup || popup.closed) {
-            console.log('LinkedIn popup closed');
+            console.log('LinkedIn popup closed, checking authentication status...');
             clearInterval(checkPopup);
-            // Check if the user was authenticated
-            supabase.auth.getSession().then(({ data: { session } }) => {
-              if (session) {
-                console.log('Successfully authenticated with LinkedIn');
-                toast({
-                  title: "Success!",
-                  description: "Successfully logged in with LinkedIn",
-                });
-              }
-            });
+            
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            
+            if (sessionError) {
+              console.error('Error checking session after popup close:', sessionError);
+              throw sessionError;
+            }
+
+            if (session) {
+              console.log('Successfully authenticated with LinkedIn');
+              toast({
+                title: "Success!",
+                description: "Successfully logged in with LinkedIn",
+              });
+            } else {
+              console.log('No session found after popup close');
+              toast({
+                title: "Login Incomplete",
+                description: "LinkedIn login was not completed",
+                variant: "destructive",
+              });
+            }
           }
-        }, 500);
-      }
+        } catch (checkError) {
+          console.error('Error in popup check interval:', checkError);
+          clearInterval(checkPopup);
+          toast({
+            title: "Error",
+            description: "An error occurred during login",
+            variant: "destructive",
+          });
+        }
+      }, 500);
     } catch (error) {
-      console.error('Error connecting to LinkedIn:', error);
+      console.error('Unexpected error in LinkedIn login:', error);
       toast({
         title: "Error",
-        description: "Failed to connect to LinkedIn",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
