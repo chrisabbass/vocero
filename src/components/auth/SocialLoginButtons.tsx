@@ -2,11 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Linkedin, Twitter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 export const SocialLoginButtons = () => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState({ linkedin: false, twitter: false });
 
   const handleLinkedInLogin = async () => {
+    setIsLoading(prev => ({ ...prev, linkedin: true }));
     try {
       console.log('Starting LinkedIn OAuth process...');
       
@@ -54,7 +57,11 @@ export const SocialLoginButtons = () => {
 
       console.log('Successfully received OAuth URL from Supabase');
       console.log('Redirecting to:', data.url);
-      window.location.href = data.url;
+      
+      // Add state to URL for debugging
+      const urlWithDebug = new URL(data.url);
+      urlWithDebug.searchParams.append('debug_source', 'vocero');
+      window.location.href = urlWithDebug.toString();
       
     } catch (error) {
       console.error('Unexpected error in LinkedIn login:', error);
@@ -64,10 +71,13 @@ export const SocialLoginButtons = () => {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(prev => ({ ...prev, linkedin: false }));
     }
   };
 
   const handleTwitterLogin = async () => {
+    setIsLoading(prev => ({ ...prev, twitter: true }));
     try {
       console.log('Initiating Twitter OAuth login...');
       const redirectUrl = 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback';
@@ -77,7 +87,10 @@ export const SocialLoginButtons = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: redirectUrl,
+          queryParams: {
+            debug_source: 'vocero' // Add debug parameter
+          }
         }
       });
 
@@ -104,6 +117,8 @@ export const SocialLoginButtons = () => {
         description: "Failed to connect to Twitter",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(prev => ({ ...prev, twitter: false }));
     }
   };
 
@@ -113,17 +128,19 @@ export const SocialLoginButtons = () => {
         variant="outline"
         onClick={handleLinkedInLogin}
         className="w-full flex items-center gap-2"
+        disabled={isLoading.linkedin}
       >
         <Linkedin className="h-4 w-4" />
-        Continue with LinkedIn
+        {isLoading.linkedin ? 'Connecting...' : 'Continue with LinkedIn'}
       </Button>
       <Button
         variant="outline"
         onClick={handleTwitterLogin}
         className="w-full flex items-center gap-2"
+        disabled={isLoading.twitter}
       >
         <Twitter className="h-4 w-4" />
-        Continue with Twitter
+        {isLoading.twitter ? 'Connecting...' : 'Continue with Twitter'}
       </Button>
     </div>
   );
