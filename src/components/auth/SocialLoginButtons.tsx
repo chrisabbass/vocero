@@ -10,7 +10,7 @@ export const SocialLoginButtons = () => {
 
   // Get the current URL for redirect
   const redirectUrl = `${window.location.origin}/auth/callback`;
-
+  
   const handleLinkedInLogin = async () => {
     if (isLoading.linkedin) return;
     setIsLoading(prev => ({ ...prev, linkedin: true }));
