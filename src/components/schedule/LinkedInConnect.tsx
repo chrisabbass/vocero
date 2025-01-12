@@ -61,25 +61,18 @@ export const LinkedInConnect = () => {
         return;
       }
 
-      // Store the current URL to redirect back after OAuth
-      localStorage.setItem('linkedin_redirect', window.location.pathname);
-
       console.log('Initiating LinkedIn OAuth flow for user:', user.id);
       
-      // Create state parameter with user ID
-      const stateParam = JSON.stringify({
-        userId: user.id,
-        redirectTo: `${window.location.origin}/schedule`
-      });
-
-      // Use Supabase's built-in OAuth with the correct callback URL
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
-          redirectTo: 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback',
           scopes: 'w_member_social',
+          redirectTo: `${window.location.origin}/schedule`,
           queryParams: {
-            state: stateParam
+            state: JSON.stringify({
+              userId: user.id,
+              redirectTo: `${window.location.origin}/schedule`
+            })
           }
         }
       });
