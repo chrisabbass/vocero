@@ -3,6 +3,12 @@ import { Linkedin, Twitter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { AuthError } from "@supabase/supabase-js";
+
+type OAuthResponse = {
+  data: { url: string } | null;
+  error: AuthError | null;
+};
 
 export const SocialLoginButtons = () => {
   const { toast } = useToast();
@@ -19,7 +25,7 @@ export const SocialLoginButtons = () => {
       console.log('Starting LinkedIn OAuth process...');
       console.log('Using redirect URL:', redirectUrl);
       
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise<OAuthResponse>((_, reject) => {
         setTimeout(() => reject(new Error('Request timed out')), 15000); // 15 second timeout
       });
 
@@ -35,12 +41,22 @@ export const SocialLoginButtons = () => {
       });
 
       const { data, error } = await Promise.race([authPromise, timeoutPromise])
-        .catch(error => {
+        .catch((error: Error): OAuthResponse => {
           console.error('LinkedIn OAuth error:', error);
           if (error.message === 'Request timed out') {
-            return { error: { message: 'Connection timed out. Please try again.' } };
+            return { 
+              data: null, 
+              error: { 
+                message: 'Connection timed out. Please try again.',
+                name: 'TimeoutError',
+                status: 408
+              } as AuthError 
+            };
           }
-          return { error };
+          return { 
+            data: null, 
+            error: error as AuthError 
+          };
         });
 
       if (error) {
@@ -92,7 +108,7 @@ export const SocialLoginButtons = () => {
       console.log('Initiating Twitter OAuth login...');
       console.log('Using redirect URL:', redirectUrl);
       
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise<OAuthResponse>((_, reject) => {
         setTimeout(() => reject(new Error('Request timed out')), 15000); // 15 second timeout
       });
 
@@ -105,12 +121,22 @@ export const SocialLoginButtons = () => {
       });
 
       const { data, error } = await Promise.race([authPromise, timeoutPromise])
-        .catch(error => {
+        .catch((error: Error): OAuthResponse => {
           console.error('Twitter OAuth error:', error);
           if (error.message === 'Request timed out') {
-            return { error: { message: 'Connection timed out. Please try again.' } };
+            return { 
+              data: null, 
+              error: { 
+                message: 'Connection timed out. Please try again.',
+                name: 'TimeoutError',
+                status: 408
+              } as AuthError 
+            };
           }
-          return { error };
+          return { 
+            data: null, 
+            error: error as AuthError 
+          };
         });
 
       if (error) {
