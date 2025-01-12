@@ -66,14 +66,8 @@ export const LinkedInConnect = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
-          scopes: 'w_member_social',
           redirectTo: `${window.location.origin}/schedule`,
-          queryParams: {
-            state: JSON.stringify({
-              userId: user.id,
-              redirectTo: `${window.location.origin}/schedule`
-            })
-          }
+          scopes: 'w_member_social',
         }
       });
 
