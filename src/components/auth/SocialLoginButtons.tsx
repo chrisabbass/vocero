@@ -10,10 +10,10 @@ export const SocialLoginButtons = () => {
     try {
       console.log('Starting LinkedIn OAuth process...');
       
-      // Use vocero.ai as the redirect URL in production
       const redirectUrl = 'https://vocero.ai/schedule';
       console.log('Using redirect URL:', redirectUrl);
       
+      console.log('Initiating LinkedIn OAuth with Supabase...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
@@ -27,6 +27,11 @@ export const SocialLoginButtons = () => {
 
       if (error) {
         console.error('LinkedIn OAuth error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
         toast({
           title: "Authentication Error",
           description: error.message,
@@ -37,6 +42,7 @@ export const SocialLoginButtons = () => {
 
       if (!data?.url) {
         console.error('No OAuth URL received from Supabase');
+        console.error('Response data:', data);
         toast({
           title: "Error",
           description: "Failed to initiate LinkedIn login",
@@ -45,11 +51,13 @@ export const SocialLoginButtons = () => {
         return;
       }
 
-      console.log('Redirecting to LinkedIn OAuth URL:', data.url);
+      console.log('Successfully received OAuth URL from Supabase');
+      console.log('Redirecting to:', data.url);
       window.location.href = data.url;
       
     } catch (error) {
       console.error('Unexpected error in LinkedIn login:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -64,6 +72,7 @@ export const SocialLoginButtons = () => {
       const redirectUrl = 'https://vocero.ai/schedule';
       console.log('Using redirect URL:', redirectUrl);
       
+      console.log('Initiating Twitter OAuth with Supabase...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
@@ -73,15 +82,22 @@ export const SocialLoginButtons = () => {
 
       if (error) {
         console.error('Twitter OAuth error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
         throw error;
       }
 
       if (data?.url) {
-        console.log('Redirecting to Twitter OAuth URL:', data.url);
+        console.log('Successfully received OAuth URL from Supabase');
+        console.log('Redirecting to:', data.url);
         window.location.href = data.url;
       }
     } catch (error) {
       console.error('Error connecting to Twitter:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
       toast({
         title: "Error",
         description: "Failed to connect to Twitter",
