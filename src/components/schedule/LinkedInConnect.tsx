@@ -72,11 +72,11 @@ export const LinkedInConnect = () => {
         redirectTo: `${window.location.origin}/schedule`
       });
 
-      // Use Supabase's built-in OAuth
+      // Use Supabase's built-in OAuth with the correct callback URL
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
-          redirectTo: `${window.location.origin}/auth/v1/callback`,
+          redirectTo: 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback',
           scopes: 'w_member_social',
           queryParams: {
             state: stateParam
