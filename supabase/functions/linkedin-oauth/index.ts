@@ -27,14 +27,6 @@ async function handleLinkedInCallback(code: string, state: string) {
       throw new Error('Invalid state parameter');
     }
     
-    const userId = parsedState.userId;
-    if (!userId) {
-      console.error('[LinkedIn OAuth] No user ID in state');
-      throw new Error('No user ID provided');
-    }
-
-    console.log('[LinkedIn OAuth] User ID from state:', userId);
-    
     // Exchange code for access token
     console.log('[LinkedIn OAuth] Exchanging code for access token');
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -60,12 +52,19 @@ async function handleLinkedInCallback(code: string, state: string) {
     const tokenData = await tokenResponse.json();
     console.log('[LinkedIn OAuth] Successfully received access token');
 
-    // Store the token in the database using the service role client
-    console.log('[LinkedIn OAuth] Storing token in database for user:', userId);
+    // Get the user session to store the token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error('[LinkedIn OAuth] No valid session found:', sessionError);
+      throw new Error('No valid session found');
+    }
+
+    // Store the token in the database
+    console.log('[LinkedIn OAuth] Storing token for user:', session.user.id);
     const { error: upsertError } = await supabase
       .from('user_social_tokens')
       .upsert({
-        user_id: userId,
+        user_id: session.user.id,
         platform: 'linkedin',
         access_token: tokenData.access_token,
         updated_at: new Date().toISOString(),
@@ -128,12 +127,16 @@ Deno.serve(async (req) => {
     const result = await handleLinkedInCallback(code, state);
     console.log('[LinkedIn OAuth] Callback handled successfully:', result);
     
+    // Get the return path from state
+    const parsedState = JSON.parse(state);
+    const returnPath = parsedState.returnTo || '/schedule';
+    
     // Redirect to the frontend after successful OAuth
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': '/schedule',
+        'Location': returnPath,
       },
     });
   } catch (error) {
