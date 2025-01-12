@@ -8,24 +8,27 @@ export const SocialLoginButtons = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState({ linkedin: false, twitter: false });
 
+  // Get the current URL for redirect
+  const redirectUrl = `${window.location.origin}/auth/v1/callback`;
+
   const handleLinkedInLogin = async () => {
-    if (isLoading.linkedin) return; // Prevent multiple rapid clicks
+    if (isLoading.linkedin) return;
     setIsLoading(prev => ({ ...prev, linkedin: true }));
+    
     try {
       console.log('Starting LinkedIn OAuth process...');
-      
-      // Use the Supabase callback URL for development
-      const redirectUrl = 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback';
       console.log('Using redirect URL:', redirectUrl);
+      console.log('Current origin:', window.location.origin);
       
-      console.log('Initiating LinkedIn OAuth with Supabase...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
           scopes: 'w_member_social',
           queryParams: {
             auth_type: 'reauthenticate',
-            debug_source: 'vocero'
+            debug_source: 'vocero',
+            debug_time: new Date().toISOString(),
+            redirect_uri: redirectUrl
           },
           redirectTo: redirectUrl
         }
@@ -37,7 +40,8 @@ export const SocialLoginButtons = () => {
           message: error.message,
           status: error.status,
           name: error.name,
-          stack: error.stack
+          stack: error.stack,
+          cause: error.cause
         });
         toast({
           title: "Authentication Error",
@@ -65,7 +69,8 @@ export const SocialLoginButtons = () => {
       const urlWithDebug = new URL(data.url);
       urlWithDebug.searchParams.append('debug_source', 'vocero');
       urlWithDebug.searchParams.append('debug_time', new Date().toISOString());
-      console.log('Redirecting to URL with debug params:', urlWithDebug.toString());
+      urlWithDebug.searchParams.append('redirect_uri', redirectUrl);
+      console.log('Final redirect URL:', urlWithDebug.toString());
       
       window.location.href = urlWithDebug.toString();
       
@@ -79,7 +84,6 @@ export const SocialLoginButtons = () => {
         variant: "destructive",
       });
     } finally {
-      // Small delay before allowing another attempt
       setTimeout(() => {
         setIsLoading(prev => ({ ...prev, linkedin: false }));
       }, 1000);
@@ -87,21 +91,22 @@ export const SocialLoginButtons = () => {
   };
 
   const handleTwitterLogin = async () => {
-    if (isLoading.twitter) return; // Prevent multiple rapid clicks
+    if (isLoading.twitter) return;
     setIsLoading(prev => ({ ...prev, twitter: true }));
+    
     try {
       console.log('Initiating Twitter OAuth login...');
-      const redirectUrl = 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback';
       console.log('Using redirect URL:', redirectUrl);
+      console.log('Current origin:', window.location.origin);
       
-      console.log('Initiating Twitter OAuth with Supabase...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
           redirectTo: redirectUrl,
           queryParams: {
             debug_source: 'vocero',
-            debug_time: new Date().toISOString()
+            debug_time: new Date().toISOString(),
+            redirect_uri: redirectUrl
           }
         }
       });
@@ -112,19 +117,29 @@ export const SocialLoginButtons = () => {
           message: error.message,
           status: error.status,
           name: error.name,
-          stack: error.stack
+          stack: error.stack,
+          cause: error.cause
         });
         throw error;
       }
 
-      if (data?.url) {
-        console.log('Successfully received OAuth URL from Supabase');
-        console.log('Full OAuth URL:', data.url);
-        window.location.href = data.url;
-      } else {
-        console.error('No URL received from Twitter OAuth');
+      if (!data?.url) {
+        console.error('No OAuth URL received from Twitter');
+        console.error('Response data:', data);
         throw new Error('No OAuth URL received');
       }
+
+      console.log('Successfully received OAuth URL from Supabase');
+      console.log('Full OAuth URL:', data.url);
+      
+      // Add debug parameters
+      const urlWithDebug = new URL(data.url);
+      urlWithDebug.searchParams.append('debug_source', 'vocero');
+      urlWithDebug.searchParams.append('debug_time', new Date().toISOString());
+      urlWithDebug.searchParams.append('redirect_uri', redirectUrl);
+      console.log('Final redirect URL:', urlWithDebug.toString());
+      
+      window.location.href = urlWithDebug.toString();
     } catch (error) {
       console.error('Error connecting to Twitter:', error);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available');
@@ -135,7 +150,6 @@ export const SocialLoginButtons = () => {
         variant: "destructive",
       });
     } finally {
-      // Small delay before allowing another attempt
       setTimeout(() => {
         setIsLoading(prev => ({ ...prev, twitter: false }));
       }, 1000);
