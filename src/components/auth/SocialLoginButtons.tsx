@@ -1,14 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Linkedin, Twitter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AuthError } from "@supabase/supabase-js";
-
-type OAuthResponse = {
-  data: { url: string } | null;
-  error: AuthError | null;
-};
 
 export const SocialLoginButtons = () => {
   const { toast } = useToast();
@@ -23,6 +18,10 @@ export const SocialLoginButtons = () => {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('[LinkedIn OAuth] Using redirect URL:', redirectUrl);
       
+      // Get current user session to include in state
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('[LinkedIn OAuth] Current user:', user?.id || 'No user');
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
@@ -62,7 +61,7 @@ export const SocialLoginButtons = () => {
 
       // Store user ID in state parameter for the callback
       const state = JSON.stringify({
-        userId: (await supabase.auth.getUser()).data.user?.id,
+        userId: user?.id,
         returnTo: window.location.pathname
       });
 

@@ -15,10 +15,23 @@ const corsHeaders = {
 async function handleLinkedInCallback(code: string, state: string) {
   try {
     console.log('[LinkedIn OAuth] Starting callback handling with code');
+    console.log('[LinkedIn OAuth] State parameter:', state);
     
     // Parse the state parameter
-    const parsedState = JSON.parse(state);
+    let parsedState;
+    try {
+      parsedState = JSON.parse(state);
+      console.log('[LinkedIn OAuth] Parsed state:', parsedState);
+    } catch (error) {
+      console.error('[LinkedIn OAuth] Error parsing state:', error);
+      throw new Error('Invalid state parameter');
+    }
+    
     const userId = parsedState.userId;
+    if (!userId) {
+      console.error('[LinkedIn OAuth] No user ID in state');
+      throw new Error('No user ID provided');
+    }
 
     console.log('[LinkedIn OAuth] User ID from state:', userId);
     
@@ -75,6 +88,8 @@ async function handleLinkedInCallback(code: string, state: string) {
 
 // Handle incoming requests
 Deno.serve(async (req) => {
+  console.log('[LinkedIn OAuth] Received request:', req.method, req.url);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -87,7 +102,7 @@ Deno.serve(async (req) => {
     const error = url.searchParams.get('error');
     const error_description = url.searchParams.get('error_description');
 
-    console.log('[LinkedIn OAuth] Received callback with params:', { 
+    console.log('[LinkedIn OAuth] Request parameters:', { 
       hasCode: !!code, 
       hasState: !!state, 
       error, 
@@ -110,10 +125,10 @@ Deno.serve(async (req) => {
       throw new Error('Missing code or state parameter');
     }
 
-    await handleLinkedInCallback(code, state);
+    const result = await handleLinkedInCallback(code, state);
+    console.log('[LinkedIn OAuth] Callback handled successfully:', result);
     
     // Redirect to the frontend after successful OAuth
-    console.log('[LinkedIn OAuth] Successfully handled callback, redirecting to /schedule');
     return new Response(null, {
       status: 302,
       headers: {
@@ -122,7 +137,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
-    console.error('[LinkedIn OAuth] Error handling callback:', error);
+    console.error('[LinkedIn OAuth] Error handling request:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
