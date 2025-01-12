@@ -17,10 +17,18 @@ export const SocialLoginButtons = () => {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('[LinkedIn OAuth] Using redirect URL:', redirectUrl);
       
+      // Get current user ID if available
+      const { data: { user } } = await supabase.auth.getUser();
+      const state = JSON.stringify({
+        userId: user?.id,
+        returnTo: '/login',
+        timestamp: Date.now()
+      });
+      
       try {
         console.log('[LinkedIn OAuth] Invoking edge function');
         const { data: functionData, error: functionError } = await supabase.functions.invoke('linkedin-oauth', {
-          body: { redirectUrl }
+          body: { redirectUrl, state }
         });
 
         if (functionError) {
@@ -35,6 +43,7 @@ export const SocialLoginButtons = () => {
 
         console.log('[LinkedIn OAuth] Redirecting to:', functionData.url);
         window.location.href = functionData.url;
+        return;
       } catch (functionError) {
         console.error('[LinkedIn OAuth] Failed to invoke edge function:', functionError);
         throw functionError;
