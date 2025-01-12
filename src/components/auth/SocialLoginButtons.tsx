@@ -19,7 +19,11 @@ export const SocialLoginButtons = () => {
       console.log('Starting LinkedIn OAuth process...');
       console.log('Using redirect URL:', redirectUrl);
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 15000); // 15 second timeout
+      });
+
+      const authPromise = supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
           scopes: 'w_member_social',
@@ -30,6 +34,15 @@ export const SocialLoginButtons = () => {
         }
       });
 
+      const { data, error } = await Promise.race([authPromise, timeoutPromise])
+        .catch(error => {
+          console.error('LinkedIn OAuth error:', error);
+          if (error.message === 'Request timed out') {
+            return { error: { message: 'Connection timed out. Please try again.' } };
+          }
+          return { error };
+        });
+
       if (error) {
         console.error('LinkedIn OAuth error:', {
           message: error.message,
@@ -38,7 +51,7 @@ export const SocialLoginButtons = () => {
         });
         toast({
           title: "Authentication Error",
-          description: error.message || "Failed to connect to LinkedIn",
+          description: error.message || "Failed to connect to LinkedIn. Please try again.",
           variant: "destructive",
         });
         return;
@@ -48,7 +61,7 @@ export const SocialLoginButtons = () => {
         console.error('No OAuth URL received from Supabase');
         toast({
           title: "Error",
-          description: "Failed to initiate LinkedIn login",
+          description: "Failed to initiate LinkedIn login. Please try again.",
           variant: "destructive",
         });
         return;
@@ -79,13 +92,26 @@ export const SocialLoginButtons = () => {
       console.log('Initiating Twitter OAuth login...');
       console.log('Using redirect URL:', redirectUrl);
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 15000); // 15 second timeout
+      });
+
+      const authPromise = supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
           redirectTo: redirectUrl,
           scopes: 'tweet.write tweet.read users.read offline.access'
         }
       });
+
+      const { data, error } = await Promise.race([authPromise, timeoutPromise])
+        .catch(error => {
+          console.error('Twitter OAuth error:', error);
+          if (error.message === 'Request timed out') {
+            return { error: { message: 'Connection timed out. Please try again.' } };
+          }
+          return { error };
+        });
 
       if (error) {
         console.error('Twitter OAuth error:', {
@@ -95,7 +121,7 @@ export const SocialLoginButtons = () => {
         });
         toast({
           title: "Authentication Error",
-          description: error.message || "Failed to connect to Twitter",
+          description: error.message || "Failed to connect to Twitter. Please try again.",
           variant: "destructive",
         });
         return;
@@ -105,7 +131,7 @@ export const SocialLoginButtons = () => {
         console.error('No OAuth URL received from Twitter');
         toast({
           title: "Error",
-          description: "Failed to initiate Twitter login",
+          description: "Failed to initiate Twitter login. Please try again.",
           variant: "destructive",
         });
         return;
@@ -118,7 +144,7 @@ export const SocialLoginButtons = () => {
       console.error('Error connecting to Twitter:', error);
       toast({
         title: "Error",
-        description: "Failed to connect to Twitter",
+        description: "Failed to connect to Twitter. Please try again.",
         variant: "destructive",
       });
     } finally {
