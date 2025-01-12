@@ -17,7 +17,7 @@ export const SocialLoginButtons = () => {
           queryParams: {
             auth_type: 'reauthenticate'
           },
-          skipBrowserRedirect: true
+          redirectTo: `${window.location.origin}/schedule`
         }
       });
 
@@ -42,60 +42,8 @@ export const SocialLoginButtons = () => {
       }
 
       console.log('Opening LinkedIn OAuth popup with URL:', data.url);
-      const popup = window.open(
-        data.url,
-        'Login with LinkedIn',
-        'width=600,height=700,left=200,top=100'
-      );
-
-      if (!popup) {
-        console.error('Popup was blocked by browser');
-        toast({
-          title: "Error",
-          description: "Please allow popups for this site to login with LinkedIn",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const checkPopup = setInterval(async () => {
-        try {
-          if (!popup || popup.closed) {
-            console.log('LinkedIn popup closed, checking authentication status...');
-            clearInterval(checkPopup);
-            
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            
-            if (sessionError) {
-              console.error('Error checking session after popup close:', sessionError);
-              throw sessionError;
-            }
-
-            if (session) {
-              console.log('Successfully authenticated with LinkedIn');
-              toast({
-                title: "Success!",
-                description: "Successfully logged in with LinkedIn",
-              });
-            } else {
-              console.log('No session found after popup close');
-              toast({
-                title: "Login Incomplete",
-                description: "LinkedIn login was not completed",
-                variant: "destructive",
-              });
-            }
-          }
-        } catch (checkError) {
-          console.error('Error in popup check interval:', checkError);
-          clearInterval(checkPopup);
-          toast({
-            title: "Error",
-            description: "An error occurred during login",
-            variant: "destructive",
-          });
-        }
-      }, 500);
+      window.location.href = data.url;
+      
     } catch (error) {
       console.error('Unexpected error in LinkedIn login:', error);
       toast({
@@ -112,7 +60,7 @@ export const SocialLoginButtons = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          skipBrowserRedirect: true // This enables popup behavior
+          redirectTo: `${window.location.origin}/schedule`
         }
       });
 
@@ -122,28 +70,8 @@ export const SocialLoginButtons = () => {
       }
 
       if (data?.url) {
-        console.log('Opening Twitter OAuth popup...');
-        const popup = window.open(
-          data.url,
-          'Login with Twitter',
-          'width=600,height=700,left=200,top=100'
-        );
-
-        const checkPopup = setInterval(() => {
-          if (!popup || popup.closed) {
-            console.log('Twitter popup closed');
-            clearInterval(checkPopup);
-            supabase.auth.getSession().then(({ data: { session } }) => {
-              if (session) {
-                console.log('Successfully authenticated with Twitter');
-                toast({
-                  title: "Success!",
-                  description: "Successfully logged in with Twitter",
-                });
-              }
-            });
-          }
-        }, 500);
+        console.log('Opening Twitter OAuth URL:', data.url);
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error('Error connecting to Twitter:', error);
