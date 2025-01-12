@@ -25,39 +25,13 @@ export const SocialLoginButtons = () => {
       console.log('Starting LinkedIn OAuth process...');
       console.log('Using redirect URL:', redirectUrl);
       
-      const timeoutPromise = new Promise<OAuthResponse>((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 15000);
-      });
-
-      const authPromise = supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
           scopes: 'w_member_social',
-          redirectTo: redirectUrl,
-          queryParams: {
-            auth_type: 'reauthenticate'
-          }
+          redirectTo: redirectUrl
         }
       });
-
-      const { data, error } = await Promise.race([authPromise, timeoutPromise])
-        .catch((error: Error): OAuthResponse => {
-          console.error('LinkedIn OAuth error:', error);
-          if (error.message === 'Request timed out') {
-            return { 
-              data: null, 
-              error: { 
-                message: 'Connection timed out. Please try again.',
-                name: 'TimeoutError',
-                status: 408
-              } as AuthError 
-            };
-          }
-          return { 
-            data: null, 
-            error: error as AuthError 
-          };
-        });
 
       if (error) {
         console.error('LinkedIn OAuth error:', {
@@ -108,36 +82,13 @@ export const SocialLoginButtons = () => {
       console.log('Initiating Twitter OAuth login...');
       console.log('Using redirect URL:', redirectUrl);
       
-      const timeoutPromise = new Promise<OAuthResponse>((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 15000);
-      });
-
-      const authPromise = supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
           redirectTo: redirectUrl,
           scopes: 'tweet.write tweet.read users.read offline.access'
         }
       });
-
-      const { data, error } = await Promise.race([authPromise, timeoutPromise])
-        .catch((error: Error): OAuthResponse => {
-          console.error('Twitter OAuth error:', error);
-          if (error.message === 'Request timed out') {
-            return { 
-              data: null, 
-              error: { 
-                message: 'Connection timed out. Please try again.',
-                name: 'TimeoutError',
-                status: 408
-              } as AuthError 
-            };
-          }
-          return { 
-            data: null, 
-            error: error as AuthError 
-          };
-        });
 
       if (error) {
         console.error('Twitter OAuth error:', {
