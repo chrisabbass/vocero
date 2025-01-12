@@ -22,27 +22,30 @@ export const SocialLoginButtons = () => {
     setIsLoading(prev => ({ ...prev, linkedin: true }));
     
     try {
-      console.log('Starting LinkedIn OAuth process...');
-      console.log('Using redirect URL:', redirectUrl);
+      console.log('[LinkedIn OAuth] Starting authentication process');
+      console.log('[LinkedIn OAuth] Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
           scopes: 'w_member_social',
-          redirectTo: redirectUrl
+          redirectTo: redirectUrl,
+          queryParams: {
+            prompt: 'consent'
+          }
         }
       });
 
-      console.log('LinkedIn OAuth response:', { data, error });
+      console.log('[LinkedIn OAuth] Response:', { data, error });
 
       if (error) {
-        console.error('LinkedIn OAuth error:', {
+        console.error('[LinkedIn OAuth] Error:', {
           message: error.message,
           status: error.status,
           name: error.name
         });
         toast({
-          title: "Authentication Error",
+          title: "LinkedIn Authentication Error",
           description: error.message || "Failed to connect to LinkedIn. Please try again.",
           variant: "destructive",
         });
@@ -50,23 +53,22 @@ export const SocialLoginButtons = () => {
       }
 
       if (!data?.url) {
-        console.error('No OAuth URL received from Supabase');
+        console.error('[LinkedIn OAuth] No URL received');
         toast({
-          title: "Error",
+          title: "LinkedIn Error",
           description: "Failed to initiate LinkedIn login. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Successfully received OAuth URL:', data.url);
-      console.log('Redirecting to LinkedIn OAuth URL...');
+      console.log('[LinkedIn OAuth] Redirecting to:', data.url);
       window.location.href = data.url;
       
     } catch (error) {
-      console.error('Unexpected error in LinkedIn login:', error);
+      console.error('[LinkedIn OAuth] Unexpected error:', error);
       toast({
-        title: "Error",
+        title: "LinkedIn Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
@@ -80,27 +82,30 @@ export const SocialLoginButtons = () => {
     setIsLoading(prev => ({ ...prev, twitter: true }));
     
     try {
-      console.log('Initiating Twitter OAuth login...');
-      console.log('Using redirect URL:', redirectUrl);
+      console.log('[Twitter OAuth] Starting authentication process');
+      console.log('[Twitter OAuth] Using redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
           redirectTo: redirectUrl,
-          scopes: 'tweet.write tweet.read users.read offline.access'
+          scopes: 'tweet.write tweet.read users.read offline.access',
+          queryParams: {
+            prompt: 'consent'
+          }
         }
       });
 
-      console.log('Twitter OAuth response:', { data, error });
+      console.log('[Twitter OAuth] Response:', { data, error });
 
       if (error) {
-        console.error('Twitter OAuth error:', {
+        console.error('[Twitter OAuth] Error:', {
           message: error.message,
           status: error.status,
           name: error.name
         });
         toast({
-          title: "Authentication Error",
+          title: "Twitter Authentication Error",
           description: error.message || "Failed to connect to Twitter. Please try again.",
           variant: "destructive",
         });
@@ -108,24 +113,23 @@ export const SocialLoginButtons = () => {
       }
 
       if (!data?.url) {
-        console.error('No OAuth URL received from Twitter');
+        console.error('[Twitter OAuth] No URL received');
         toast({
-          title: "Error",
+          title: "Twitter Error",
           description: "Failed to initiate Twitter login. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Successfully received OAuth URL:', data.url);
-      console.log('Redirecting to Twitter OAuth URL...');
+      console.log('[Twitter OAuth] Redirecting to:', data.url);
       window.location.href = data.url;
       
     } catch (error) {
-      console.error('Error connecting to Twitter:', error);
+      console.error('[Twitter OAuth] Unexpected error:', error);
       toast({
-        title: "Error",
-        description: "Failed to connect to Twitter. Please try again.",
+        title: "Twitter Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -142,7 +146,7 @@ export const SocialLoginButtons = () => {
         disabled={isLoading.linkedin}
       >
         <Linkedin className="h-4 w-4" />
-        {isLoading.linkedin ? 'Connecting...' : 'Continue with LinkedIn'}
+        {isLoading.linkedin ? 'Connecting to LinkedIn...' : 'Continue with LinkedIn'}
       </Button>
       <Button
         variant="outline"
@@ -151,7 +155,7 @@ export const SocialLoginButtons = () => {
         disabled={isLoading.twitter}
       >
         <Twitter className="h-4 w-4" />
-        {isLoading.twitter ? 'Connecting...' : 'Continue with Twitter'}
+        {isLoading.twitter ? 'Connecting to Twitter...' : 'Continue with Twitter'}
       </Button>
     </div>
   );
