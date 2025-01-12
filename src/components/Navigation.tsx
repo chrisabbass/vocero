@@ -28,13 +28,34 @@ const Navigation = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log('Initiating sign out process...');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error during sign out:', error);
+        toast({
+          title: "Error",
+          description: "Failed to sign out. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Successfully signed out');
+      // Clear any additional local storage items if needed
+      // localStorage.removeItem('your-custom-item');
+      
+      toast({
+        title: "Success",
+        description: "You have been signed out successfully.",
+      });
+      
       navigate('/');
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Unexpected error during sign out:', error);
       toast({
         title: "Error",
-        description: "Failed to log out. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
