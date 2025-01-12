@@ -64,28 +64,13 @@ export const TwitterConnect = () => {
 
       console.log('Initiating Twitter OAuth flow');
       
-      // First get the secrets
-      const { data: clientId, error: clientIdError } = await supabase.rpc('get_secret', { name: 'TWITTER_CLIENT_ID' });
-      const { data: clientSecret, error: clientSecretError } = await supabase.rpc('get_secret', { name: 'TWITTER_CLIENT_SECRET' });
-
-      if (clientIdError || clientSecretError) {
-        console.error('Error fetching Twitter credentials:', clientIdError || clientSecretError);
-        throw new Error('Failed to fetch Twitter credentials');
-      }
-
-      if (!clientId || !clientSecret) {
-        throw new Error('Twitter credentials not found');
-      }
-
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
           redirectTo: `${window.location.origin}/auth/v1/callback`,
           scopes: 'tweet.write tweet.read users.read offline.access',
           queryParams: {
-            state,
-            client_id: clientId,
-            client_secret: clientSecret
+            state
           }
         }
       });
