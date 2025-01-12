@@ -67,22 +67,32 @@ export const LinkedInConnect = () => {
         redirectTo: '/schedule'
       });
 
-      // Redirect to LinkedIn OAuth endpoint
-      const response = await fetch(`${window.location.origin}/functions/linkedin-oauth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ state }),
-      });
+      console.log('[LinkedIn OAuth] Starting connection process');
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log('[LinkedIn OAuth] Using redirect URL:', redirectUrl);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to initiate LinkedIn OAuth');
+      try {
+        console.log('[LinkedIn OAuth] Invoking edge function');
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('linkedin-oauth', {
+          body: { redirectUrl, state }
+        });
+
+        if (functionError) {
+          console.error('[LinkedIn OAuth] Edge function error:', functionError);
+          throw new Error(functionError.message);
+        }
+
+        if (!functionData?.url) {
+          console.error('[LinkedIn OAuth] No URL received from edge function');
+          throw new Error('Failed to get authorization URL');
+        }
+
+        console.log('[LinkedIn OAuth] Redirecting to:', functionData.url);
+        window.location.href = functionData.url;
+      } catch (functionError) {
+        console.error('[LinkedIn OAuth] Failed to invoke edge function:', functionError);
+        throw functionError;
       }
-
-      const { url } = await response.json();
-      window.location.href = url;
     } catch (error) {
       console.error('Error connecting to LinkedIn:', error);
       toast({
