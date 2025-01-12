@@ -40,8 +40,7 @@ export const SocialLoginButtons = () => {
           message: error.message,
           status: error.status,
           name: error.name,
-          stack: error.stack,
-          cause: error.cause
+          stack: error.stack
         });
         toast({
           title: "Authentication Error",
@@ -117,8 +116,7 @@ export const SocialLoginButtons = () => {
           message: error.message,
           status: error.status,
           name: error.name,
-          stack: error.stack,
-          cause: error.cause
+          stack: error.stack
         });
         throw error;
       }
