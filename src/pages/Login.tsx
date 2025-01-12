@@ -18,6 +18,23 @@ const Login = () => {
   useEffect(() => {
     console.log('Login page mounted, setting up auth listeners');
     
+    // Handle OAuth callback
+    const handleAuthCallback = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const error = hashParams.get('error');
+      const errorDescription = hashParams.get('error_description');
+      
+      if (error) {
+        console.error('OAuth callback error:', error, errorDescription);
+        toast({
+          title: "Authentication Error",
+          description: errorDescription || "Failed to authenticate",
+          variant: "destructive",
+        });
+        return;
+      }
+    };
+
     // Check if user is already authenticated
     const checkAuth = async () => {
       console.log('Checking initial auth state...');
@@ -37,6 +54,7 @@ const Login = () => {
       }
     };
 
+    handleAuthCallback();
     checkAuth();
 
     // Set up auth state change listener
