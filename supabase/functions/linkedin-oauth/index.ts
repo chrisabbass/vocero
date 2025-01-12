@@ -12,6 +12,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function initiateOAuth(redirectUrl: string) {
+  console.log('[LinkedIn OAuth] Initiating OAuth flow with redirect URL:', redirectUrl);
+  
+  const state = JSON.stringify({
+    returnTo: '/schedule'
+  });
+
+  const linkedInUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
+  linkedInUrl.searchParams.append('response_type', 'code');
+  linkedInUrl.searchParams.append('client_id', LINKEDIN_CLIENT_ID);
+  linkedInUrl.searchParams.append('redirect_uri', redirectUrl);
+  linkedInUrl.searchParams.append('state', state);
+  linkedInUrl.searchParams.append('scope', 'w_member_social');
+
+  console.log('[LinkedIn OAuth] Generated authorization URL:', linkedInUrl.toString());
+  
+  return { url: linkedInUrl.toString() };
+}
+
 async function handleLinkedInCallback(code: string, state: string) {
   try {
     console.log('[LinkedIn OAuth] Starting callback handling with code');
@@ -52,33 +71,7 @@ async function handleLinkedInCallback(code: string, state: string) {
     const tokenData = await tokenResponse.json();
     console.log('[LinkedIn OAuth] Successfully received access token');
 
-    // Get the user session to store the token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('[LinkedIn OAuth] No valid session found:', sessionError);
-      throw new Error('No valid session found');
-    }
-
-    // Store the token in the database
-    console.log('[LinkedIn OAuth] Storing token for user:', session.user.id);
-    const { error: upsertError } = await supabase
-      .from('user_social_tokens')
-      .upsert({
-        user_id: session.user.id,
-        platform: 'linkedin',
-        access_token: tokenData.access_token,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,platform'
-      });
-
-    if (upsertError) {
-      console.error('[LinkedIn OAuth] Error storing token:', upsertError);
-      throw upsertError;
-    }
-
-    console.log('[LinkedIn OAuth] Successfully stored token');
-    return { success: true };
+    return { success: true, url: parsedState.returnTo || '/schedule' };
   } catch (error) {
     console.error('[LinkedIn OAuth] Error in callback:', error);
     throw error;
@@ -95,6 +88,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (req.method === 'POST') {
+      const { action, redirectUrl } = await req.json();
+      
+      if (action === 'initiate' && redirectUrl) {
+        console.log('[LinkedIn OAuth] Processing initiate action');
+        const result = await initiateOAuth(redirectUrl);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Handle callback
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
@@ -119,26 +125,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!code || !state) {
-      console.error('[LinkedIn OAuth] Missing required parameters');
-      throw new Error('Missing code or state parameter');
+    if (code && state) {
+      const result = await handleLinkedInCallback(code, state);
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const result = await handleLinkedInCallback(code, state);
-    console.log('[LinkedIn OAuth] Callback handled successfully:', result);
-    
-    // Get the return path from state
-    const parsedState = JSON.parse(state);
-    const returnPath = parsedState.returnTo || '/schedule';
-    
-    // Redirect to the frontend after successful OAuth
-    return new Response(null, {
-      status: 302,
-      headers: {
-        ...corsHeaders,
-        'Location': returnPath,
-      },
-    });
+    return new Response(
+      JSON.stringify({ error: 'Invalid request' }),
+      { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('[LinkedIn OAuth] Error handling request:', error);
     return new Response(
