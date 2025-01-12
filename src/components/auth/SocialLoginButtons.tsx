@@ -29,68 +29,23 @@ export const SocialLoginButtons = () => {
           throw new Error(functionError.message);
         }
 
-        console.log('[LinkedIn OAuth] Edge function response:', functionData);
+        if (!functionData?.url) {
+          console.error('[LinkedIn OAuth] No URL received from edge function');
+          throw new Error('Failed to get authorization URL');
+        }
+
+        console.log('[LinkedIn OAuth] Redirecting to:', functionData.url);
+        window.location.href = functionData.url;
+        return;
       } catch (functionError) {
         console.error('[LinkedIn OAuth] Failed to invoke edge function:', functionError);
-        // Fall back to direct OAuth if edge function fails
-        console.log('[LinkedIn OAuth] Falling back to direct OAuth');
+        throw functionError;
       }
-
-      // Proceed with direct OAuth
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'linkedin',
-        options: {
-          scopes: 'w_member_social',
-          redirectTo: redirectUrl,
-          queryParams: {
-            prompt: 'consent'
-          }
-        }
-      });
-
-      console.log('[LinkedIn OAuth] Direct OAuth response:', { data, error });
-
-      if (error) {
-        console.error('[LinkedIn OAuth] Error:', {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
-        toast({
-          title: "LinkedIn Authentication Error",
-          description: error.message || "Failed to connect to LinkedIn. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!data?.url) {
-        console.error('[LinkedIn OAuth] No URL received');
-        toast({
-          title: "LinkedIn Error",
-          description: "Failed to initiate LinkedIn login. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Store return path in state
-      const state = JSON.stringify({
-        returnTo: window.location.pathname
-      });
-
-      // Append state to the OAuth URL
-      const finalUrl = new URL(data.url);
-      finalUrl.searchParams.set('state', state);
-
-      console.log('[LinkedIn OAuth] Redirecting to:', finalUrl.toString());
-      window.location.href = finalUrl.toString();
-      
     } catch (error) {
       console.error('[LinkedIn OAuth] Unexpected error:', error);
       toast({
         title: "LinkedIn Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -71,7 +71,32 @@ async function handleLinkedInCallback(code: string, state: string) {
     const tokenData = await tokenResponse.json();
     console.log('[LinkedIn OAuth] Successfully received access token');
 
-    return { success: true, url: parsedState.returnTo || '/schedule' };
+    // Get user session and store token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error('[LinkedIn OAuth] No valid session found:', sessionError);
+      throw new Error('No valid session found');
+    }
+
+    // Store the token in the database
+    const { error: upsertError } = await supabase
+      .from('user_social_tokens')
+      .upsert({
+        user_id: session.user.id,
+        platform: 'linkedin',
+        access_token: tokenData.access_token,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id,platform'
+      });
+
+    if (upsertError) {
+      console.error('[LinkedIn OAuth] Error storing token:', upsertError);
+      throw upsertError;
+    }
+
+    console.log('[LinkedIn OAuth] Successfully stored token');
+    return { success: true, returnTo: parsedState.returnTo || '/schedule' };
   } catch (error) {
     console.error('[LinkedIn OAuth] Error in callback:', error);
     throw error;
@@ -90,6 +115,7 @@ Deno.serve(async (req) => {
   try {
     if (req.method === 'POST') {
       const { action, redirectUrl } = await req.json();
+      console.log('[LinkedIn OAuth] POST request with action:', action);
       
       if (action === 'initiate' && redirectUrl) {
         console.log('[LinkedIn OAuth] Processing initiate action');
