@@ -12,7 +12,7 @@ export const SocialLoginButtons = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
-          redirectTo: `${window.location.origin}/schedule`,
+          redirectTo: 'https://www.vocero.ai/schedule',
           scopes: 'w_member_social',
           queryParams: {
             auth_type: 'reauthenticate'
@@ -69,7 +69,7 @@ export const SocialLoginButtons = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: `${window.location.origin}/schedule`,
+          redirectTo: 'https://www.vocero.ai/schedule',
           skipBrowserRedirect: true // This enables popup behavior
         }
       });
