@@ -33,6 +33,8 @@ export const SocialLoginButtons = () => {
         }
       });
 
+      console.log('LinkedIn OAuth response:', { data, error });
+
       if (error) {
         console.error('LinkedIn OAuth error:', {
           message: error.message,
@@ -58,6 +60,7 @@ export const SocialLoginButtons = () => {
       }
 
       console.log('Successfully received OAuth URL:', data.url);
+      console.log('Redirecting to LinkedIn OAuth URL...');
       window.location.href = data.url;
       
     } catch (error) {
@@ -68,9 +71,7 @@ export const SocialLoginButtons = () => {
         variant: "destructive",
       });
     } finally {
-      setTimeout(() => {
-        setIsLoading(prev => ({ ...prev, linkedin: false }));
-      }, 1000);
+      setIsLoading(prev => ({ ...prev, linkedin: false }));
     }
   };
 
@@ -89,6 +90,8 @@ export const SocialLoginButtons = () => {
           scopes: 'tweet.write tweet.read users.read offline.access'
         }
       });
+
+      console.log('Twitter OAuth response:', { data, error });
 
       if (error) {
         console.error('Twitter OAuth error:', {
@@ -115,6 +118,7 @@ export const SocialLoginButtons = () => {
       }
 
       console.log('Successfully received OAuth URL:', data.url);
+      console.log('Redirecting to Twitter OAuth URL...');
       window.location.href = data.url;
       
     } catch (error) {
@@ -125,9 +129,7 @@ export const SocialLoginButtons = () => {
         variant: "destructive",
       });
     } finally {
-      setTimeout(() => {
-        setIsLoading(prev => ({ ...prev, twitter: false }));
-      }, 1000);
+      setIsLoading(prev => ({ ...prev, twitter: false }));
     }
   };
 
