@@ -10,6 +10,9 @@ export const SocialLoginButtons = () => {
     try {
       console.log('Starting LinkedIn OAuth process...');
       
+      const redirectUrl = `${window.location.origin}/schedule`;
+      console.log('Using redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
@@ -17,7 +20,7 @@ export const SocialLoginButtons = () => {
           queryParams: {
             auth_type: 'reauthenticate'
           },
-          redirectTo: `${window.location.origin}/schedule`
+          redirectTo: redirectUrl
         }
       });
 
@@ -41,7 +44,7 @@ export const SocialLoginButtons = () => {
         return;
       }
 
-      console.log('Opening LinkedIn OAuth popup with URL:', data.url);
+      console.log('Redirecting to LinkedIn OAuth URL:', data.url);
       window.location.href = data.url;
       
     } catch (error) {
@@ -57,10 +60,13 @@ export const SocialLoginButtons = () => {
   const handleTwitterLogin = async () => {
     try {
       console.log('Initiating Twitter OAuth login...');
+      const redirectUrl = `${window.location.origin}/schedule`;
+      console.log('Using redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: `${window.location.origin}/schedule`
+          redirectTo: redirectUrl
         }
       });
 
@@ -70,7 +76,7 @@ export const SocialLoginButtons = () => {
       }
 
       if (data?.url) {
-        console.log('Opening Twitter OAuth URL:', data.url);
+        console.log('Redirecting to Twitter OAuth URL:', data.url);
         window.location.href = data.url;
       }
     } catch (error) {
