@@ -15,13 +15,11 @@ const corsHeaders = {
 async function initiateOAuth(redirectUrl: string) {
   console.log('[LinkedIn OAuth] Initiating OAuth flow with redirect URL:', redirectUrl);
   
+  // Generate a state parameter that includes return path
   const state = JSON.stringify({
     returnTo: '/schedule'
   });
 
-  // Ensure the redirect URL is properly encoded
-  const encodedRedirectUrl = encodeURIComponent(redirectUrl);
-  
   const linkedInUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
   linkedInUrl.searchParams.append('response_type', 'code');
   linkedInUrl.searchParams.append('client_id', LINKEDIN_CLIENT_ID);
