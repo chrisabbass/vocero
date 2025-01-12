@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ScheduleForm } from "@/components/schedule/ScheduleForm";
 import { ScheduledPostsList } from "@/components/schedule/ScheduledPostsList";
-import { LinkedInConnect } from "@/components/schedule/LinkedInConnect";
-import { TwitterConnect } from "@/components/schedule/TwitterConnect";
 import * as z from "zod";
 
 // Define the form schema
@@ -117,11 +115,6 @@ const Schedule = () => {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-8">Schedule Posts</h1>
-      
-      <div className="flex gap-4 mb-8">
-        <LinkedInConnect />
-        <TwitterConnect />
-      </div>
       
       <ScheduleForm 
         onSubmit={(values) => createPost.mutate(values)}

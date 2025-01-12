@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PasswordValidation } from "@/components/auth/PasswordValidation";
 import { LoginFeatures } from "@/components/auth/LoginFeatures";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 const Login = () => {
   const location = useLocation();
@@ -86,6 +87,8 @@ const Login = () => {
 
         <LoginFeatures from={from} />
         
+        <SocialLoginButtons />
+
         <Auth
           supabaseClient={supabase}
           appearance={{ 
