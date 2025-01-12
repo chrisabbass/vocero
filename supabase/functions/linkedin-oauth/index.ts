@@ -12,13 +12,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function handleLinkedInCallback(code: string, stateParam: string) {
+async function handleLinkedInCallback(code: string, state: string) {
   try {
-    console.log('Handling LinkedIn callback with state:', stateParam);
+    console.log('Handling LinkedIn callback with state:', state);
     
     // Parse the state parameter
-    const state = JSON.parse(stateParam);
-    const userId = state.userId;
+    const parsedState = JSON.parse(state);
+    const userId = parsedState.userId;
 
     console.log('Parsed user ID from state:', userId);
     
@@ -33,7 +33,7 @@ async function handleLinkedInCallback(code: string, stateParam: string) {
         code,
         client_id: LINKEDIN_CLIENT_ID,
         client_secret: LINKEDIN_CLIENT_SECRET,
-        redirect_uri: 'https://nmjmurbaaevmakymqiyc.supabase.co/auth/v1/callback',
+        redirect_uri: `${SUPABASE_URL}/auth/v1/callback`,
       }),
     });
 

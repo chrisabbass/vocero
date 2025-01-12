@@ -61,19 +61,28 @@ export const LinkedInConnect = () => {
         return;
       }
 
-      console.log('Initiating LinkedIn OAuth flow for user:', user.id);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'linkedin',
-        options: {
-          redirectTo: `${window.location.origin}/schedule`,
-          scopes: 'w_member_social',
-        }
+      // Create state parameter with user ID
+      const state = JSON.stringify({
+        userId: user.id,
+        redirectTo: '/schedule'
       });
 
-      if (error) throw error;
-      console.log('LinkedIn OAuth initiated:', data);
+      // Redirect to LinkedIn OAuth endpoint
+      const response = await fetch(`${window.location.origin}/functions/linkedin-oauth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ state }),
+      });
 
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to initiate LinkedIn OAuth');
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
     } catch (error) {
       console.error('Error connecting to LinkedIn:', error);
       toast({
